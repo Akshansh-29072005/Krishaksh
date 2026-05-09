@@ -1,5 +1,6 @@
 package com.aarcsx.krishaksh.core.designsystem.components
 
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -135,55 +136,54 @@ fun AgriHeroSection(
         shape = RoundedCornerShape(AgriCornerRadius),
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
-        Column(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(
-                    Brush.verticalGradient(
+                    Brush.horizontalGradient(
                         colors = listOf(Color.White, Color(0xFFE8F5E9))
                     )
                 )
-                .padding(AgriPadding),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .padding(20.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "Scan Your Crop",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = ForestGreen
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = "AI disease detection",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.Gray
+                )
+                Spacer(Modifier.height(16.dp))
+                Button(
+                    onClick = onScanClick,
+                    modifier = Modifier.height(40.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = ForestGreen),
+                    contentPadding = PaddingValues(horizontal = 16.dp)
+                ) {
+                    Text("Start Scanning", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                }
+            }
+            Spacer(Modifier.width(16.dp))
             Box(
                 modifier = Modifier
-                    .size(80.dp)
+                    .size(72.dp)
                     .background(Color(0xFFF1F8E9), CircleShape),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = Icons.Default.PhotoCamera,
                     contentDescription = null,
-                    modifier = Modifier.size(40.dp),
+                    modifier = Modifier.size(36.dp),
                     tint = ForestGreen
                 )
-            }
-            Spacer(Modifier.height(16.dp))
-            Text(
-                text = "Scan Your Crop",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                color = ForestGreen
-            )
-            Spacer(Modifier.height(8.dp))
-            Text(
-                text = "AI-powered disease detection for healthier crops",
-                style = MaterialTheme.typography.bodyMedium,
-                color = Color.Gray,
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                modifier = Modifier.padding(horizontal = 16.dp)
-            )
-            Spacer(Modifier.height(24.dp))
-            Button(
-                onClick = onScanClick,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = ForestGreen)
-            ) {
-                Text("Start Scanning", fontWeight = FontWeight.Bold, fontSize = 16.sp)
             }
         }
     }
@@ -455,3 +455,67 @@ data class RecentScanData(
     val imageUrl: String,
     val isHealthy: Boolean
 )
+
+data class AdPartner(
+    val id: String,
+    val name: String,
+    val logoUrl: String
+)
+
+@Composable
+fun AgriAdCarousel(partners: List<AdPartner>) {
+    Column {
+        Text(
+            text = "Featured Partners",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            color = ForestGreen,
+            modifier = Modifier.padding(horizontal = AgriPadding)
+        )
+        Spacer(Modifier.height(12.dp))
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = AgriPadding)
+                .shadow(2.dp, RoundedCornerShape(AgriCornerRadius)),
+            shape = RoundedCornerShape(AgriCornerRadius),
+            colors = CardDefaults.cardColors(containerColor = Color.White)
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .basicMarquee(
+                        iterations = Int.MAX_VALUE,
+                        velocity = 40.dp
+                    )
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(32.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // If the list is empty, put a placeholder
+                if (partners.isEmpty()) {
+                    Text("Your ad here", color = Color.LightGray)
+                }
+                partners.forEach { partner ->
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        AsyncImage(
+                            model = partner.logoUrl,
+                            contentDescription = null,
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape),
+                            contentScale = ContentScale.Crop
+                        )
+                        Spacer(Modifier.width(12.dp))
+                        Text(
+                            text = partner.name,
+                            fontWeight = FontWeight.Bold,
+                            color = ForestGreen,
+                            fontSize = 18.sp
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
