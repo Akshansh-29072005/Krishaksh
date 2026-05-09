@@ -6,6 +6,8 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -90,74 +92,60 @@ private fun HomeContent(
     onScanClick: () -> Unit,
     onNotificationClick: () -> Unit
 ) {
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-        contentPadding = PaddingValues(bottom = 32.dp)
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(bottom = 32.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         // App Title
-        item {
-            Text(
-                text = "Krishaksh",
-                modifier = Modifier.padding(start = 24.dp, top = 16.dp),
-                style = MaterialTheme.typography.displaySmall,
-                fontWeight = FontWeight.Black,
-                color = ForestGreen,
-                letterSpacing = (-1).sp
-            )
-        }
+        Text(
+            text = "Krishaksh",
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp),
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+            style = MaterialTheme.typography.displaySmall,
+            fontWeight = FontWeight.Black,
+            color = ForestGreen,
+            letterSpacing = (-1).sp
+        )
 
         // 1. Header Section
-        item {
-            AgriHeader(
-                userName = uiState.userName,
-                location = uiState.location,
-                onNotificationClick = onNotificationClick
-            )
-        }
+        AgriHeader(
+            userName = uiState.userName,
+            location = uiState.location,
+            onNotificationClick = onNotificationClick
+        )
 
         // 2. Hero Scan Section
-        item {
-            AgriHeroSection(onScanClick = onScanClick)
-        }
+        AgriHeroSection(onScanClick = onScanClick)
 
         // 3. Weather + Alert Section
-        item {
-            AgriWeatherAlertRow(
-                temp = uiState.weather?.temperature ?: "28°C",
-                condition = uiState.weather?.condition ?: "Sunny",
-                windSpeed = "12 km/h",
-                weatherType = WeatherType.SUNNY,
-                alertTitle = uiState.alerts.firstOrNull()?.title ?: "No Alerts",
-                alertDesc = uiState.alerts.firstOrNull()?.description ?: "Your area is safe."
-            )
-        }
+        AgriWeatherAlertRow(
+            temp = uiState.weather?.temperature ?: "28°C",
+            condition = uiState.weather?.condition ?: "Sunny",
+            windSpeed = "12 km/h",
+            weatherType = WeatherType.SUNNY,
+            alertTitle = uiState.alerts.firstOrNull()?.title ?: "No Alerts",
+            alertDesc = uiState.alerts.firstOrNull()?.description ?: "Your area is safe."
+        )
 
-        // 4. Recent Scans Section
-        item {
-            val scanItems = uiState.recentScans.map {
-                RecentScanData(
-                    id = it.id,
-                    cropName = it.cropName,
-                    status = it.status,
-                    time = it.date,
-                    imageUrl = it.imageUrl,
-                    isHealthy = it.status == "Healthy"
-                )
-            }
-            AgriRecentScansRow(
-                scans = scanItems,
-                onScanClick = { /* TODO: Navigate to detail */ }
-            )
-        }
+        // 4. Sponsored Partners Section
+        val partners = listOf(
+            AdPartner("1", "GreenEarth Agri", "https://images.unsplash.com/photo-1599424423956-6f81014ccbe0?q=80&w=2169&auto=format&fit=crop"),
+            AdPartner("2", "EcoFarm Solutions", "https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?q=80&w=2187&auto=format&fit=crop"),
+            AdPartner("3", "BioCure Genetics", "https://images.unsplash.com/photo-1628352081506-83c43123ed6d?q=80&w=2196&auto=format&fit=crop"),
+            AdPartner("4", "AgriCorp Seeds", "https://images.unsplash.com/photo-1585314062340-f1a5a7c9328d?q=80&w=1000&auto=format&fit=crop")
+        )
+        AgriAdCarousel(partners = partners)
 
         // 5. Recommendation Section
-        item {
-            AgriRecommendationCard(
-                title = "Rice Blast Prevention",
-                description = "Humidity is high. Use recommended fungicides to protect your crop.",
-                onClick = { /* TODO */ }
-            )
-        }
+        AgriRecommendationCard(
+            title = "Rice Blast Prevention",
+            description = "Humidity is high. Use recommended fungicides to protect your crop.",
+            onClick = { /* TODO */ }
+        )
     }
 }
