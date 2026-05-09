@@ -1,6 +1,7 @@
 package com.aarcsx.krishaksh.features.scan
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -16,21 +17,54 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.aarcsx.krishaksh.core.designsystem.theme.ForestGreen
 
+import android.content.Context
+import androidx.camera.core.CameraSelector
+import androidx.camera.core.Preview
+import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.view.PreviewView
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.compose.ui.platform.LocalContext
+
 @Composable
 fun ScanScreen(
     onBackClick: () -> Unit,
     onCaptured: () -> Unit
 ) {
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    var showCropSelection by remember { mutableStateOf(false) }
+    var selectedCrop by remember { mutableStateOf("") }
+    val crops = listOf("Wheat", "Rice", "Tomato", "Potato", "Cotton", "Mustard")
+
     Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
-        // Camera Preview placeholder
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.DarkGray.copy(alpha = 0.5f)),
-            contentAlignment = Alignment.Center
-        ) {
-            Text("Camera Preview", color = Color.White)
-        }
+        // Camera Preview Live Feed
+        AndroidView(
+            factory = { ctx ->
+                val previewView = PreviewView(ctx)
+                val cameraProviderFuture = ProcessCameraProvider.getInstance(ctx)
+                cameraProviderFuture.addListener({
+                    val cameraProvider = cameraProviderFuture.get()
+                    val preview = Preview.Builder().build().also {
+                        it.setSurfaceProvider(previewView.surfaceProvider)
+                    }
+                    val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+
+                    try {
+                        cameraProvider.unbindAll()
+                        cameraProvider.bindToLifecycle(
+                            lifecycleOwner, cameraSelector, preview
+                        )
+                    } catch(exc: Exception) {
+                        // Log or handle camera binding failure
+                    }
+                }, ContextCompat.getMainExecutor(ctx))
+                previewView
+            },
+            modifier = Modifier.fillMaxSize()
+        )
 
         // Overlays
         IconButton(
@@ -47,13 +81,16 @@ fun ScanScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                "Point your camera at the crop leaf",
+                "Point camera at the crop leaf",
                 color = Color.White,
                 modifier = Modifier.padding(bottom = 24.dp)
             )
-            
+
             Surface(
-                onClick = onCaptured,
+                onClick = {
+                    // Trigger crop selection dialog before analyzing
+                    showCropSelection = true
+                },
                 shape = CircleShape,
                 color = Color.White,
                 modifier = Modifier.size(80.dp)
@@ -67,6 +104,54 @@ fun ScanScreen(
                     )
                 }
             }
+        }
+
+        // Crop Selection Dialog
+        if (showCropSelection) {
+            AlertDialog(
+                onDismissRequest = { showCropSelection = false },
+                title = { Text("Select Crop Category") },
+                text = {
+                    Column {
+                        Text("Which crop did you just scan?")
+                        Spacer(modifier = Modifier.height(16.dp))
+                        crops.forEach { crop ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { selectedCrop = crop }
+                                    .padding(vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                RadioButton(
+                                    selected = selectedCrop == crop,
+                                    onClick = { selectedCrop = crop },
+                                    colors = RadioButtonDefaults.colors(selectedColor = ForestGreen)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(text = crop)
+                            }
+                        }
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            showCropSelection = false
+                            onCaptured() // Proceed to LoadingScreen (API placeholder)
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = ForestGreen),
+                        enabled = selectedCrop.isNotEmpty()
+                    ) {
+                        Text("Upload & Analyze")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showCropSelection = false }) {
+                        Text("Cancel", color = Color.Gray)
+                    }
+                }
+            )
         }
     }
 }
