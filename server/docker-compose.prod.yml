@@ -2,12 +2,7 @@ version: '3.9'
 
 x-common-env: &common-env
   SERVER_ENV: production
-  DB_HOST: ${DB_HOST}
-  DB_PORT: ${DB_PORT:-5432}
-  DB_USER: ${DB_USER}
-  DB_PASSWORD: ${DB_PASSWORD}
-  DB_NAME: ${DB_NAME}
-  DB_SSLMODE: ${DB_SSLMODE:-require}
+  DATABASE_URL: ${DATABASE_URL}
   REDIS_ADDR: redis:6379
   JWT_SECRET: ${JWT_SECRET}
   RAZORPAY_KEY_ID: ${RAZORPAY_KEY_ID}
@@ -18,6 +13,10 @@ x-common-env: &common-env
   AWS_REGION: ${AWS_REGION}
   S3_BUCKET: ${S3_BUCKET}
   ENABLE_EMBEDDED_WORKER: "false"
+  DB_MAX_CONNS: ${DB_MAX_CONNS:-50}
+  DB_MIN_CONNS: ${DB_MIN_CONNS:-5}
+  DB_CONN_MAX_LIFETIME: ${DB_CONN_MAX_LIFETIME:-1h}
+  DB_CONN_MAX_IDLE_TIME: ${DB_CONN_MAX_IDLE_TIME:-30m}
 
 services:
   api:

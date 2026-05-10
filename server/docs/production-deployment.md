@@ -1,51 +1,49 @@
-# Krisho Production Deployment (AWS)
+# Krisho Production Deployment
 
 ## Architecture
-- EC2 instance(s): run Docker Compose stack (`api`, `worker`, `redis`, `nginx`, `prometheus`).
-- RDS PostgreSQL: managed DB, private subnet, `sslmode=require`.
-- S3: scan image storage + backups.
-- IAM Role on EC2/ECS: used for AWS API access (no static credentials).
+- EC2/VPS instance(s): run Docker Compose stack (`api`, `worker`, `redis`, `nginx`, `prometheus`).
+- Supabase PostgreSQL: Managed PostgreSQL (Session Pooler), `sslmode=require`.
+- AWS S3: scan image storage.
+- IAM Role on EC2/ECS: used for S3 access.
 
-## Containers
-- `api`: serves Gin APIs, health, metrics.
-- `worker`: Asynq processors (scan/payment/analytics).
-- `redis`: queue backend and cache.
-- `nginx`: TLS termination + reverse proxy + headers + limits.
-- `prometheus`: scrape metrics.
+## Infrastructure Setup Checklist
 
-## AWS setup checklist
-1. RDS PostgreSQL
-- Enable automated backups (7-35 days).
-- Enable Performance Insights.
-- Put in private subnet.
-- Security group: only app nodes can connect 5432.
+### 1. Supabase PostgreSQL
+- Create a Supabase project.
+- Go to **Project Settings** -> **Database**.
+- Use the **Transaction/Session Pooler** connection string (Port 5432).
+- Ensure **sslmode=require** is appended to the connection string.
+- Set `DATABASE_URL` in `.env.prod`.
+- Configure `DB_MAX_CONNS` based on your Supabase tier (default: 50 for session pooler).
 
-2. S3 bucket
+### 2. AWS S3 bucket
 - Enable versioning.
-- Enable default encryption (SSE-S3 or SSE-KMS).
+- Enable default encryption (SSE-S3).
 - Block public access.
+- Attach least-privilege role to EC2 instance profile for S3 access.
 
-3. IAM role strategy
-- Attach least-privilege role to EC2 instance profile:
-  - `s3:GetObject`, `s3:PutObject`, `s3:ListBucket` on required bucket/prefix.
-  - Optional `kms:Decrypt` if KMS encryption.
-- Do not set `AWS_ACCESS_KEY` / `AWS_SECRET_KEY` in env.
-
-4. TLS certificates
+### 3. TLS certificates
 - Place cert files in `deploy/nginx/certs/`:
   - `fullchain.pem`
   - `privkey.pem`
-- Prefer AWS ACM + ALB for managed TLS in scaled setup.
 
-## Environment and secrets
-- Use `.env.prod` loaded by compose.
-- Validate before deploy using `scripts/validate-env.sh`.
-- Firebase service account mounted as Docker secret:
-  - `deploy/secrets/firebase_service_account.json`
+## Supabase Pooling Notes
+- The backend uses `pgxpool` with Supabase session pooling.
+- Recommended Settings:
+  - `DB_MAX_CONNS`: 50
+  - `DB_MIN_CONNS`: 5
+  - `DB_CONN_MAX_LIFETIME`: 1h
+- Avoid "Statement" pooling; only "Transaction" or "Session" mode is supported for migration compatibility.
+
+## Troubleshooting
+- **Connection Timeout**: check if Supabase IP is restricted (Supabase allows all by default, but ensure no VPC blocks egress 5432).
+- **SSL Error**: Ensure `?sslmode=require` is in the `DATABASE_URL`.
+- **Pool Exhaustion**: Check transaction leaks or increase `DB_MAX_CONNS`.
 
 ## Deploy
 ```bash
 cd server
+cp .env.prod.example .env.prod # and configure
 ./scripts/deploy-prod.sh .env.prod
 ```
 

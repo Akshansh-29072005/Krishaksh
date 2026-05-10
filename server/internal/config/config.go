@@ -2,7 +2,6 @@ package config
 
 import (
 	"errors"
-	"fmt"
 	"log"
 	"os"
 
@@ -10,43 +9,41 @@ import (
 )
 
 type Config struct {
-	ServerPort string
-	ServerEnv  string
-	DBHost     string
-	DBPort     string
-	DBUser     string
-	DBPassword string
-	DBName     string
-	DBSSLMode  string
-	RedisAddr  string
-	Env        string
+	ServerPort  string
+	ServerEnv   string
+	DatabaseURL string // Combined DSN for Supabase
+	RedisAddr   string
+	Env         string
+
+	// Pooling settings for Supabase Safe Pooling
+	DBMaxConns        string
+	DBMinConns        string
+	DBConnMaxLifetime string
+	DBConnMaxIdleTime string
 }
 
 func LoadConfig() *Config {
-	// Load .env only if it exists (in production, we might rely entirely on system ENVs)
+	// Load .env only if it exists
 	if err := godotenv.Load(); err != nil {
 		log.Println("No .env file found or error reading it. Using system environment variables.")
 	}
 
 	return &Config{
-		ServerPort: getEnvOrDefault("SERVER_PORT", "8080"),
-		ServerEnv:  getEnvOrDefault("SERVER_ENV", "development"),
-		DBHost:     getEnvOrDefault("DB_HOST", "localhost"),
-		DBPort:     getEnvOrDefault("DB_PORT", "5432"),
-		DBUser:     getEnvOrDefault("DB_USER", "postgres"),
-		DBPassword: getEnvOrDefault("DB_PASSWORD", "postgres"),
-		DBName:     getEnvOrDefault("DB_NAME", "krisho_db"),
-		DBSSLMode:  getEnvOrDefault("DB_SSLMODE", "disable"),
-		RedisAddr:  getEnvOrDefault("REDIS_ADDR", "127.0.0.1:6379"),
-		Env:        getEnvOrDefault("SERVER_ENV", "development"),
+		ServerPort:        getEnvOrDefault("SERVER_PORT", "8080"),
+		ServerEnv:         getEnvOrDefault("SERVER_ENV", "development"),
+		DatabaseURL:       getEnvOrDefault("DATABASE_URL", ""),
+		RedisAddr:         getEnvOrDefault("REDIS_ADDR", "127.0.0.1:6379"),
+		Env:               getEnvOrDefault("SERVER_ENV", "development"),
+		DBMaxConns:        getEnvOrDefault("DB_MAX_CONNS", "20"),
+		DBMinConns:        getEnvOrDefault("DB_MIN_CONNS", "2"),
+		DBConnMaxLifetime: getEnvOrDefault("DB_CONN_MAX_LIFETIME", "1h"),
+		DBConnMaxIdleTime: getEnvOrDefault("DB_CONN_MAX_IDLE_TIME", "30m"),
 	}
 }
 
 func (c *Config) GetDSN() string {
-	return fmt.Sprintf(
-		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
-		c.DBHost, c.DBPort, c.DBUser, c.DBPassword, c.DBName, c.DBSSLMode,
-	)
+	// For Supabase, we prefer the full DATABASE_URL which includes sslmode=require
+	return c.DatabaseURL
 }
 
 func getEnvOrDefault(key, fallback string) string {
@@ -57,8 +54,8 @@ func getEnvOrDefault(key, fallback string) string {
 }
 
 func (c *Config) Validate() error {
-	if c.DBHost == "" || c.DBPort == "" || c.DBUser == "" || c.DBName == "" {
-		return errors.New("database configuration is incomplete")
+	if c.DatabaseURL == "" {
+		return errors.New("DATABASE_URL is required for Supabase connection")
 	}
 	if c.ServerPort == "" {
 		return errors.New("server port missing")
