@@ -1,0 +1,13 @@
+{
+  "scans_per_month": 50000,
+  "mau": 8000,
+  "avg_images_mb": 0.35,
+  "gemini_cost_per_scan_usd": 0.002,
+  "openai_cost_per_scan_usd": 0.003,
+  "fallback_rate": 0.12,
+  "s3_storage_cost_per_gb_usd": 0.023,
+  "queue_infra_monthly_usd": 30,
+  "rds_monthly_usd": 140,
+  "ec2_monthly_usd": 90,
+  "observability_monthly_usd": 40
+}

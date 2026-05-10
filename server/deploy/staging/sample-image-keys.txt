@@ -1,0 +1,3 @@
+scans/staging/real-crop-1.jpg
+scans/staging/real-crop-2.jpg
+scans/staging/real-crop-3.jpg

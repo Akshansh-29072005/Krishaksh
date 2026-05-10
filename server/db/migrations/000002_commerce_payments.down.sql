@@ -1,0 +1,8 @@
+ALTER TABLE orders DROP CONSTRAINT IF EXISTS fk_orders_payment_id;
+DROP TABLE IF EXISTS webhook_events;
+DROP TABLE IF EXISTS transactions;
+DROP TABLE IF EXISTS payments;
+DROP TABLE IF EXISTS order_items;
+DROP TABLE IF EXISTS orders;
+DROP TABLE IF EXISTS cart_items;
+DROP TABLE IF EXISTS carts;
