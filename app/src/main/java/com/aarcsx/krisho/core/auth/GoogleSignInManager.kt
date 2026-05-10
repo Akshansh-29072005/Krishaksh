@@ -13,7 +13,7 @@ class GoogleSignInManager @Inject constructor(
     @ApplicationContext context: Context
 ) {
     private val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-        .requestIdToken("YOUR_WEB_CLIENT_ID")
+        .requestIdToken("248483110576-913ukuatgdpnacge6lp598stqlqiman0.apps.googleusercontent.com")
         .requestEmail()
         .build()
 

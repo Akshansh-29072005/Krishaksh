@@ -14,4 +14,7 @@
 .cxx
 local.properties
 .idea
-*.env
+.env
+.env.*
+*.jks
+google-services.json

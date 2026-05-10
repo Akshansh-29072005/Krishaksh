@@ -70,11 +70,11 @@ android {
 }
 
 dependencies {
-    constraints {
-        implementation("org.jetbrains.kotlin:kotlin-stdlib:2.1.0")
-        implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.1.0")
-        implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk7:2.1.0")
-    }
+    // Hilt
+    implementation(libs.hilt.android)
+    kapt(libs.hilt.compiler)
+    implementation(libs.androidx.hilt.navigation.compose)
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -98,11 +98,6 @@ dependencies {
 
     // Logging
     implementation(libs.timber)
-
-    // Hilt
-    implementation(libs.hilt.android)
-    kapt(libs.hilt.compiler)
-    implementation(libs.androidx.hilt.navigation.compose)
 
     // Room
     implementation(libs.room.runtime)
