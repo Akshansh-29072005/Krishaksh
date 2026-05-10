@@ -65,11 +65,41 @@ fun ResultScreen(
                                     color = ForestGreen,
                                     fontWeight = FontWeight.Bold
                                 )
-                                Text(
-                                    text = "Confidence: ${result.confidence}",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = ForestGreen.copy(alpha = 0.7f)
-                                )
+                                
+                                val confidenceValue = result.confidence.replace("%", "").toDoubleOrNull() ?: 0.0
+                                
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(
+                                        text = "Confidence: ${result.confidence}",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = if (confidenceValue < 60.0) Color(0xFFC62828) else ForestGreen.copy(alpha = 0.7f),
+                                        fontWeight = if (confidenceValue < 60.0) FontWeight.Bold else FontWeight.Normal
+                                    )
+                                    if (confidenceValue < 60.0) {
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Icon(
+                                            imageVector = Icons.Default.Warning,
+                                            contentDescription = "Low Confidence",
+                                            tint = Color(0xFFC62828),
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                    }
+                                }
+
+                                if (confidenceValue < 40.0) {
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Surface(
+                                        color = Color(0xFFFFEBEE),
+                                        shape = RoundedCornerShape(8.dp)
+                                    ) {
+                                        Text(
+                                            text = "Uncertain prediction. Please retake photo with better lighting.",
+                                            modifier = Modifier.padding(8.dp),
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = Color(0xFFC62828)
+                                        )
+                                    }
+                                }
                             }
                         }
                     }

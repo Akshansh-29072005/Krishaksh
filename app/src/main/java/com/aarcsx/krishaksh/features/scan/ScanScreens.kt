@@ -30,14 +30,17 @@ import androidx.compose.ui.platform.LocalContext
 @Composable
 fun ScanScreen(
     onBackClick: () -> Unit,
-    onCaptured: () -> Unit
+    onCaptured: () -> Unit,
+    viewModel: ScanViewModel = androidx.hilt.navigation.compose.hiltViewModel()
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
     var showCropSelection by remember { mutableStateOf(false) }
     var selectedCrop by remember { mutableStateOf("") }
-    val crops = listOf("Wheat", "Rice", "Tomato", "Potato", "Cotton", "Mustard")
+    val userCrops by viewModel.userCrops.collectAsState()
+    val defaultCrops = listOf("Wheat", "Rice", "Tomato", "Potato", "Cotton", "Mustard")
+    val crops = userCrops.ifEmpty { defaultCrops }
 
     Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
         // Camera Preview Live Feed

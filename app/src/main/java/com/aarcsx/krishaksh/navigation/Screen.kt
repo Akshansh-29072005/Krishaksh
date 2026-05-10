@@ -1,6 +1,7 @@
 package com.aarcsx.krishaksh.navigation
 
 sealed class Screen(val route: String) {
+    object Auth : Screen("auth")
     object Home : Screen("home")
     object History : Screen("history")
     object Products : Screen("products")
@@ -12,4 +13,7 @@ sealed class Screen(val route: String) {
     object ProductDetail : Screen("product_detail/{productId}") {
         fun createRoute(productId: String) = "product_detail/$productId"
     }
+    object HelpCenter : Screen("help_center")
+    object PrivacyPolicy : Screen("privacy_policy")
+    object TermsOfService : Screen("terms_of_service")
 }

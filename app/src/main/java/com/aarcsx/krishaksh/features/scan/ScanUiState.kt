@@ -17,5 +17,6 @@ data class ScanResult(
 data class ScanUiState(
     val isAnalyzing: Boolean = false,
     val result: ScanResult? = null,
-    val capturedImageUri: String? = null
+    val capturedImageUri: String? = null,
+    val error: String? = null
 )

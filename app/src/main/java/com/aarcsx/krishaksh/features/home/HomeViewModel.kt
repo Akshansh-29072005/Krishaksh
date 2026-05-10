@@ -2,16 +2,29 @@ package com.aarcsx.krishaksh.features.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.aarcsx.krishaksh.core.common.ApiResult
+import com.aarcsx.krishaksh.core.repository.ScanRepository
+import com.aarcsx.krishaksh.core.repository.UserRepository
+import com.aarcsx.krishaksh.core.network.api.UserApiService
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.flow
 import javax.inject.Inject
 
 @HiltViewModel
-class HomeViewModel @Inject constructor() : ViewModel() {
+class HomeViewModel @Inject constructor(
+    private val userRepository: UserRepository,
+    private val scanRepository: ScanRepository,
+    private val userApiService: UserApiService
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
@@ -22,33 +35,60 @@ class HomeViewModel @Inject constructor() : ViewModel() {
 
     fun loadHomeData() {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true)
-            // Mock delay
-            delay(500)
-            _uiState.value = HomeUiState(
-                userName = "Ram Singh",
-                location = "Bhiwani, Haryana",
-                weather = WeatherInfo(
-                    temperature = "28°C",
-                    condition = "Sunny Day",
-                    humidity = "60%",
-                    wind = "5 km/h"
-                ),
-                alerts = listOf(
-                    DiseaseAlert(
-                        title = "Nearby Alerts",
-                        description = "Yellow Rust alert in neighboring farms. Inspect your wheat crop today."
-                    )
-                ),
-                recentScans = listOf(
-                    RecentScan("1", "Wheat Scan", "Healthy", "2 hours ago", "https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?q=80&w=2187&auto=format&fit=crop"),
-                    RecentScan("2", "Mustard Scan", "Aphid Warning", "Yesterday", "https://images.unsplash.com/photo-1599424423956-6f81014ccbe0?q=80&w=2169&auto=format&fit=crop")
-                ),
-                recommendations = listOf(
-                    Recommendation("1", "Eco-Green Fertilizer", "Boost your winter yield by up to 20% with organic nutrients.", "https://images.unsplash.com/photo-1628352081506-83c43123ed6d?q=80&w=2196&auto=format&fit=crop")
-                ),
-                isLoading = false
-            )
+            combine(
+                userRepository.getProfile().onStart { emit(ApiResult.Loading) },
+                scanRepository.getRecentScans(),
+                flow {
+                    try {
+                        emit(userApiService.featuredAds())
+                    } catch (e: Exception) {
+                        emit(null)
+                    }
+                }
+            ) { profileRes, scans, adsRes ->
+                val profile = (profileRes as? ApiResult.Success)?.data
+                val ads = adsRes?.body()?.data ?: emptyList()
+
+                HomeUiState(
+                    userName = profile?.name ?: "Farmer",
+                    location = profile?.email ?: "India",
+                    weather = WeatherInfo(
+                        temperature = "30°C",
+                        condition = "Clear Sky",
+                        humidity = "45%",
+                        wind = "10 km/h"
+                    ),
+                    alerts = emptyList(),
+                    recentScans = scans.take(5).map { entity ->
+                        RecentScan(
+                            id = entity.id.toString(),
+                            cropName = entity.cropName,
+                            status = entity.diseaseName,
+                            date = "Recently",
+                            imageUrl = entity.imageUrl
+                        )
+                    },
+                    recommendations = ads.map { ad ->
+                        Recommendation(
+                            id = ad.id,
+                            title = ad.title,
+                            description = "Ad",
+                            imageUrl = ad.image_url
+                        )
+                    },
+                    isLoading = (profileRes is ApiResult.Loading)
+                )
+            }.catch { e ->
+                e.printStackTrace()
+                _uiState.update { it.copy(isLoading = false, error = "Connection Error") }
+            }.collectLatest { state ->
+                _uiState.value = state
+            }
         }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        // Cancel any pending work if needed
     }
 }
