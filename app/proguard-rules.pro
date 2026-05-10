@@ -1,21 +1,26 @@
 # Add project specific ProGuard rules here.
 # You can control the set of applied configuration files using the
 # proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# Hilt/Dagger
+-keepattributes *Annotation*
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# Retrofit & OkHttp
+-keepattributes Signature, InnerClasses, EnclosingMethod
+-dontwarn okio.**
+-keep class com.aarcsx.krishaksh.core.network.dto.** { *; }
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# Room
+-keep class * extends androidx.room.RoomDatabase
+-keep class com.aarcsx.krishaksh.core.local.room.** { *; }
+
+# Razorpay
+-keep class com.razorpay.** { *; }
+-dontwarn com.razorpay.**
+
+# Firebase
+-keep class com.google.firebase.** { *; }
+
+# Preserve line numbers for Crashlytics
+-keepattributes SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile

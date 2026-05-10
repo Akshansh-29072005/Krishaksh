@@ -1,0 +1,28 @@
+<resources>
+    <string name="app_name">कृषक्ष</string>
+    <string name="home">होम</string>
+    <string name="history">इतिहास</string>
+    <string name="products">उत्पाद</string>
+    <string name="support">सहायता</string>
+    <string name="profile">प्रोफ़ाइल</string>
+    <string name="namaste">नमस्ते</string>
+    <string name="weather">मौसम</string>
+    <string name="recent_scans">हाल के स्कैन</string>
+    <string name="recommendations">सिफारिशें</string>
+    <string name="scan_now">अभी स्कैन करें</string>
+    <string name="language">भाषा</string>
+    <string name="select_crops">अपनी फसलें चुनें</string>
+    <string name="help_center">सहायता केंद्र</string>
+    <string name="privacy_policy">गोपनीयता नीति</string>
+    <string name="terms_of_service">सेवा की शर्तें</string>
+    <string name="logout">लॉग आउट</string>
+    <string name="crop_selection">फसल चयन</string>
+    <string name="start_recording">रिकॉर्डिंग शुरू करें</string>
+    <string name="stop_recording">रिकॉर्डिंग बंद करें</string>
+    <string name="upload">अपलोड करें</string>
+    <string name="save">सहेजें</string>
+    <string name="retry">पुनः प्रयास करें</string>
+    <string name="error_occurred">एक त्रुटि हुई</string>
+    <string name="no_internet">कोई इंटरनेट कनेक्शन नहीं</string>
+    <string name="offline_mode">ऑफलाइन मोड</string>
+</resources>

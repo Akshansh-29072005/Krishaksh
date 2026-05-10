@@ -1,0 +1,66 @@
+name: backend-ci
+
+on:
+  push:
+    paths:
+      - 'server/**'
+      - '.github/workflows/backend-ci.yml'
+  pull_request:
+    paths:
+      - 'server/**'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'production'
+      run_deploy:
+        description: 'Run deploy job'
+        required: true
+        default: 'false'
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.x'
+      - name: Validate env script
+        run: ./scripts/validate-env.sh || true
+      - name: Go vet
+        run: go vet ./...
+      - name: Build
+        run: go build ./...
+      - name: Test
+        run: go test ./...
+      - name: Build Docker image
+        run: docker build -t krishaksh-backend:ci .
+
+  deploy-production:
+    if: github.event_name == 'workflow_dispatch' && inputs.run_deploy == 'true'
+    needs: build-test
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.PROD_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H "${{ secrets.PROD_HOST }}" >> ~/.ssh/known_hosts
+      - name: Sync server files
+        run: |
+          rsync -az --delete server/ "${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }}:${{ secrets.PROD_PATH }}/server/"
+      - name: Deploy with migration automation
+        run: |
+          ssh "${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }}" << 'EOF'
+          cd "${{ secrets.PROD_PATH }}/server"
+          ./scripts/deploy-prod.sh .env.prod
+          curl -fsS https://${DOMAIN}/ready
+          EOF
