@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/aarcsx/krishaksh-backend/internal/database"
-	"github.com/aarcsx/krishaksh-backend/internal/models"
+	"github.com/aarcsx/krisho-backend/internal/database"
+	"github.com/aarcsx/krisho-backend/internal/models"
 	"github.com/google/uuid"
 )
 

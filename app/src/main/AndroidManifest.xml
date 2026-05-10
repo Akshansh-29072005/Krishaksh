@@ -10,7 +10,7 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
-        android:name=".KrishakshApp"
+        android:name=".KrishoApp"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -18,13 +18,13 @@
         android:label="${appLabel}"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Krishaksh"
+        android:theme="@style/Theme.Krisho"
         android:networkSecurityConfig="@xml/network_security_config">
 
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:theme="@style/Theme.Krishaksh">
+            android:theme="@style/Theme.Krisho">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -32,7 +32,7 @@
         </activity>
 
         <service
-            android:name=".core.fcm.KrishakshFCMService"
+            android:name=".core.fcm.KrishoFCMService"
             android:exported="false">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />

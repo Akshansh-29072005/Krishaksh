@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/aarcsx/krishaksh-backend/internal/observability"
+	"github.com/aarcsx/krisho-backend/internal/observability"
 	"github.com/hibiken/asynq"
 )
 

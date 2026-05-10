@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/aarcsx/krishaksh-backend/internal/core/response"
-	"github.com/aarcsx/krishaksh-backend/pkg/utils"
+	"github.com/aarcsx/krisho-backend/internal/core/response"
+	"github.com/aarcsx/krisho-backend/pkg/utils"
 	"github.com/gin-gonic/gin"
 )
 

@@ -1,8 +1,8 @@
 package routes
 
 import (
-	"github.com/aarcsx/krishaksh-backend/internal/core/middleware"
-	"github.com/aarcsx/krishaksh-backend/internal/modules/recommendations/handler"
+	"github.com/aarcsx/krisho-backend/internal/core/middleware"
+	"github.com/aarcsx/krisho-backend/internal/modules/recommendations/handler"
 	"github.com/gin-gonic/gin"
 )
 

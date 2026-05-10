@@ -5,10 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 
-	internalAI "github.com/aarcsx/krishaksh-backend/internal/ai"
-	"github.com/aarcsx/krishaksh-backend/internal/modules/scans/repository"
-	"github.com/aarcsx/krishaksh-backend/internal/observability"
-	"github.com/aarcsx/krishaksh-backend/pkg/queue"
+	internalAI "github.com/aarcsx/krisho-backend/internal/ai"
+	"github.com/aarcsx/krisho-backend/internal/modules/scans/repository"
+	"github.com/aarcsx/krisho-backend/internal/observability"
+	"github.com/aarcsx/krisho-backend/pkg/queue"
 	"github.com/google/uuid"
 	"github.com/hibiken/asynq"
 )

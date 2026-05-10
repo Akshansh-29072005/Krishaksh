@@ -7,10 +7,10 @@ import (
 	"log"
 	"time"
 
-	"github.com/aarcsx/krishaksh-backend/internal/models"
-	notifRepo "github.com/aarcsx/krishaksh-backend/internal/modules/notifications/repository"
-	"github.com/aarcsx/krishaksh-backend/internal/observability"
-	"github.com/aarcsx/krishaksh-backend/pkg/fcm"
+	"github.com/aarcsx/krisho-backend/internal/models"
+	notifRepo "github.com/aarcsx/krisho-backend/internal/modules/notifications/repository"
+	"github.com/aarcsx/krisho-backend/internal/observability"
+	"github.com/aarcsx/krisho-backend/pkg/fcm"
 	"github.com/google/uuid"
 	"github.com/hibiken/asynq"
 )

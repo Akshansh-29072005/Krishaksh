@@ -4,9 +4,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/aarcsx/krishaksh-backend/internal/core/response"
-	"github.com/aarcsx/krishaksh-backend/internal/models"
-	notifRepo "github.com/aarcsx/krishaksh-backend/internal/modules/notifications/repository"
+	"github.com/aarcsx/krisho-backend/internal/core/response"
+	"github.com/aarcsx/krisho-backend/internal/models"
+	notifRepo "github.com/aarcsx/krisho-backend/internal/modules/notifications/repository"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )

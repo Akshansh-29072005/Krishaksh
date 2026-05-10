@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 set -eu
 
-BASE_URL="${BASE_URL:-https://staging-api.krishaksh.example.com}"
+BASE_URL="${BASE_URL:-https://staging-api.krisho.example.com}"
 JWT_TOKEN="${JWT_TOKEN:-}"
 TEST_ORDER_ID="${TEST_ORDER_ID:-}"
 

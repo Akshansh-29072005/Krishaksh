@@ -9,7 +9,7 @@ set -eu
 : "${BACKUP_S3_URI:?missing BACKUP_S3_URI like s3://bucket/path}"
 
 TS=$(date +%Y%m%d_%H%M%S)
-OUT="/tmp/krishaksh_${DB_NAME}_${TS}.sql.gz"
+OUT="/tmp/krisho_${DB_NAME}_${TS}.sql.gz"
 
 export PGPASSWORD="$DB_PASSWORD"
 pg_dump -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" | gzip > "$OUT"

@@ -4,9 +4,9 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/aarcsx/krishaksh-backend/internal/core/response"
-	"github.com/aarcsx/krishaksh-backend/internal/modules/auth/dto"
-	"github.com/aarcsx/krishaksh-backend/internal/modules/auth/service"
+	"github.com/aarcsx/krisho-backend/internal/core/response"
+	"github.com/aarcsx/krisho-backend/internal/modules/auth/dto"
+	"github.com/aarcsx/krisho-backend/internal/modules/auth/service"
 	"github.com/gin-gonic/gin"
 )
 

@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/aarcsx/krishaksh-backend/internal/modules/analytics/repository"
-	"github.com/aarcsx/krishaksh-backend/internal/observability"
-	"github.com/aarcsx/krishaksh-backend/pkg/queue"
+	"github.com/aarcsx/krisho-backend/internal/modules/analytics/repository"
+	"github.com/aarcsx/krisho-backend/internal/observability"
+	"github.com/aarcsx/krisho-backend/pkg/queue"
 	"github.com/google/uuid"
 	"github.com/hibiken/asynq"
 )

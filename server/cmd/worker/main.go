@@ -10,17 +10,17 @@ import (
 
 	"github.com/hibiken/asynq"
 
-	internalAI "github.com/aarcsx/krishaksh-backend/internal/ai"
-	aiProviders "github.com/aarcsx/krishaksh-backend/internal/ai/providers"
-	"github.com/aarcsx/krishaksh-backend/internal/config"
-	"github.com/aarcsx/krishaksh-backend/internal/database"
-	analyticsRepo "github.com/aarcsx/krishaksh-backend/internal/modules/analytics/repository"
-	orderRepo "github.com/aarcsx/krishaksh-backend/internal/modules/orders/repository"
-	paymentRepo "github.com/aarcsx/krishaksh-backend/internal/modules/payments/repository"
-	scanRepo "github.com/aarcsx/krishaksh-backend/internal/modules/scans/repository"
-	"github.com/aarcsx/krishaksh-backend/internal/observability"
-	"github.com/aarcsx/krishaksh-backend/internal/workers"
-	"github.com/aarcsx/krishaksh-backend/pkg/queue"
+	internalAI "github.com/aarcsx/krisho-backend/internal/ai"
+	aiProviders "github.com/aarcsx/krisho-backend/internal/ai/providers"
+	"github.com/aarcsx/krisho-backend/internal/config"
+	"github.com/aarcsx/krisho-backend/internal/database"
+	analyticsRepo "github.com/aarcsx/krisho-backend/internal/modules/analytics/repository"
+	orderRepo "github.com/aarcsx/krisho-backend/internal/modules/orders/repository"
+	paymentRepo "github.com/aarcsx/krisho-backend/internal/modules/payments/repository"
+	scanRepo "github.com/aarcsx/krisho-backend/internal/modules/scans/repository"
+	"github.com/aarcsx/krisho-backend/internal/observability"
+	"github.com/aarcsx/krisho-backend/internal/workers"
+	"github.com/aarcsx/krisho-backend/pkg/queue"
 )
 
 func main() {

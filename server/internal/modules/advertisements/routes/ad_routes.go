@@ -1,7 +1,7 @@
 package routes
 
 import (
-	"github.com/aarcsx/krishaksh-backend/internal/modules/advertisements/handler"
+	"github.com/aarcsx/krisho-backend/internal/modules/advertisements/handler"
 	"github.com/gin-gonic/gin"
 )
 

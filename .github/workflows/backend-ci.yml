@@ -39,7 +39,7 @@ jobs:
       - name: Test
         run: go test ./...
       - name: Build Docker image
-        run: docker build -t krishaksh-backend:ci .
+        run: docker build -t krisho-backend:ci .
 
   deploy-production:
     if: github.event_name == 'workflow_dispatch' && inputs.run_deploy == 'true'

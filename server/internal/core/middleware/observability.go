@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/aarcsx/krishaksh-backend/internal/observability"
+	"github.com/aarcsx/krisho-backend/internal/observability"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )

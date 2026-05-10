@@ -4,10 +4,10 @@ import (
 	"context"
 
 	"fmt"
-	"github.com/aarcsx/krishaksh-backend/internal/models"
-	diseaseRepo "github.com/aarcsx/krishaksh-backend/internal/modules/diseases/repository"
-	productRepo "github.com/aarcsx/krishaksh-backend/internal/modules/products/repository"
-	scanRepo "github.com/aarcsx/krishaksh-backend/internal/modules/scans/repository"
+	"github.com/aarcsx/krisho-backend/internal/models"
+	diseaseRepo "github.com/aarcsx/krisho-backend/internal/modules/diseases/repository"
+	productRepo "github.com/aarcsx/krisho-backend/internal/modules/products/repository"
+	scanRepo "github.com/aarcsx/krisho-backend/internal/modules/scans/repository"
 	"github.com/google/uuid"
 )
 

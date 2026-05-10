@@ -35,7 +35,7 @@ func LoadConfig() *Config {
 		DBPort:     getEnvOrDefault("DB_PORT", "5432"),
 		DBUser:     getEnvOrDefault("DB_USER", "postgres"),
 		DBPassword: getEnvOrDefault("DB_PASSWORD", "postgres"),
-		DBName:     getEnvOrDefault("DB_NAME", "krishaksh_db"),
+		DBName:     getEnvOrDefault("DB_NAME", "krisho_db"),
 		DBSSLMode:  getEnvOrDefault("DB_SSLMODE", "disable"),
 		RedisAddr:  getEnvOrDefault("REDIS_ADDR", "127.0.0.1:6379"),
 		Env:        getEnvOrDefault("SERVER_ENV", "development"),

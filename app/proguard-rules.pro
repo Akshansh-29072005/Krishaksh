@@ -8,11 +8,11 @@
 # Retrofit & OkHttp
 -keepattributes Signature, InnerClasses, EnclosingMethod
 -dontwarn okio.**
--keep class com.aarcsx.krishaksh.core.network.dto.** { *; }
+-keep class com.aarcsx.krisho.core.network.dto.** { *; }
 
 # Room
 -keep class * extends androidx.room.RoomDatabase
--keep class com.aarcsx.krishaksh.core.local.room.** { *; }
+-keep class com.aarcsx.krisho.core.local.room.** { *; }
 
 # Razorpay
 -keep class com.razorpay.** { *; }

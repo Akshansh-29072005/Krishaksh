@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/aarcsx/krishaksh-backend/internal/modules/analytics/repository"
+	"github.com/aarcsx/krisho-backend/internal/modules/analytics/repository"
 	"github.com/google/uuid"
 )
 

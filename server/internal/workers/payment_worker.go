@@ -5,11 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/aarcsx/krishaksh-backend/internal/models"
-	orderRepo "github.com/aarcsx/krishaksh-backend/internal/modules/orders/repository"
-	paymentRepo "github.com/aarcsx/krishaksh-backend/internal/modules/payments/repository"
-	"github.com/aarcsx/krishaksh-backend/internal/observability"
-	"github.com/aarcsx/krishaksh-backend/pkg/queue"
+	"github.com/aarcsx/krisho-backend/internal/models"
+	orderRepo "github.com/aarcsx/krisho-backend/internal/modules/orders/repository"
+	paymentRepo "github.com/aarcsx/krisho-backend/internal/modules/payments/repository"
+	"github.com/aarcsx/krisho-backend/internal/observability"
+	"github.com/aarcsx/krisho-backend/pkg/queue"
 	"github.com/google/uuid"
 	"github.com/hibiken/asynq"
 )

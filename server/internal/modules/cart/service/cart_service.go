@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 
-	cartRepo "github.com/aarcsx/krishaksh-backend/internal/modules/cart/repository"
-	productRepo "github.com/aarcsx/krishaksh-backend/internal/modules/products/repository"
+	cartRepo "github.com/aarcsx/krisho-backend/internal/modules/cart/repository"
+	productRepo "github.com/aarcsx/krisho-backend/internal/modules/products/repository"
 	"github.com/google/uuid"
 )
 

@@ -1,6 +1,6 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
-    <style name="Theme.Krishaksh" parent="Theme.Material3.DayNight.NoActionBar">
+    <style name="Theme.Krisho" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="android:windowBackground">#F5F7F2</item>
         <item name="android:statusBarColor">#F5F7F2</item>
         <item name="android:windowLightStatusBar">true</item>

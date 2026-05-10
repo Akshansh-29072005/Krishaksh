@@ -3,8 +3,8 @@ package service
 import (
 	"context"
 
-	"github.com/aarcsx/krishaksh-backend/internal/models"
-	"github.com/aarcsx/krishaksh-backend/internal/modules/admin/repository"
+	"github.com/aarcsx/krisho-backend/internal/models"
+	"github.com/aarcsx/krisho-backend/internal/modules/admin/repository"
 	"github.com/google/uuid"
 )
 

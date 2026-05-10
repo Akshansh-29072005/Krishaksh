@@ -3,8 +3,8 @@ package handler
 import (
 	"net/http"
 
-	"github.com/aarcsx/krishaksh-backend/internal/core/response"
-	adRepo "github.com/aarcsx/krishaksh-backend/internal/modules/advertisements/repository"
+	"github.com/aarcsx/krisho-backend/internal/core/response"
+	adRepo "github.com/aarcsx/krisho-backend/internal/modules/advertisements/repository"
 	"github.com/gin-gonic/gin"
 )
 

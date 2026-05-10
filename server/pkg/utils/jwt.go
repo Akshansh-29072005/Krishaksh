@@ -37,7 +37,7 @@ func GenerateAccessToken(userID uuid.UUID, role string, email string) (string, e
 			ExpiresAt: jwt.NewNumericDate(expirationTime),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			NotBefore: jwt.NewNumericDate(time.Now()),
-			Issuer:    "krishaksh-backend",
+			Issuer:    "krisho-backend",
 		},
 	}
 

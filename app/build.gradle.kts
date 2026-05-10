@@ -9,11 +9,11 @@ plugins {
 }
 
 android {
-    namespace = "com.aarcsx.krishaksh"
+    namespace = "com.aarcsx.krisho"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.aarcsx.krishaksh"
+        applicationId = "com.aarcsx.krisho"
         minSdk = 24
         targetSdk = 35
         versionCode = 1
@@ -35,21 +35,21 @@ android {
         debug {
             applicationIdSuffix = ".debug"
             buildConfigField("String", "BASE_URL", "\"http://10.0.2.2:8080/api/v1/\"")
-            manifestPlaceholders["appLabel"] = "Krishaksh Dev"
+            manifestPlaceholders["appLabel"] = "Krisho Dev"
         }
         create("staging") {
             initWith(getByName("release"))
             applicationIdSuffix = ".staging"
             matchingFallbacks.add("release")
-            buildConfigField("String", "BASE_URL", "\"https://api.staging.krishaksh.com/v1/\"")
-            manifestPlaceholders["appLabel"] = "Krishaksh Staging"
+            buildConfigField("String", "BASE_URL", "\"https://api.staging.krisho.com/v1/\"")
+            manifestPlaceholders["appLabel"] = "Krisho Staging"
         }
         release {
             isMinifyEnabled = true
             isShrinkResources = true
             signingConfig = signingConfigs.getByName("release")
-            buildConfigField("String", "BASE_URL", "\"https://api.krishaksh.com/v1/\"")
-            manifestPlaceholders["appLabel"] = "Krishaksh"
+            buildConfigField("String", "BASE_URL", "\"https://api.krisho.com/v1/\"")
+            manifestPlaceholders["appLabel"] = "Krisho"
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

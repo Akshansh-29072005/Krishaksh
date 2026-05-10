@@ -8,10 +8,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/aarcsx/krishaksh-backend/internal/models"
-	"github.com/aarcsx/krishaksh-backend/internal/modules/auth/dto"
-	"github.com/aarcsx/krishaksh-backend/internal/modules/auth/repository"
-	"github.com/aarcsx/krishaksh-backend/pkg/utils"
+	"github.com/aarcsx/krisho-backend/internal/models"
+	"github.com/aarcsx/krisho-backend/internal/modules/auth/dto"
+	"github.com/aarcsx/krisho-backend/internal/modules/auth/repository"
+	"github.com/aarcsx/krisho-backend/pkg/utils"
 	"github.com/google/uuid"
 	"google.golang.org/api/idtoken"
 )

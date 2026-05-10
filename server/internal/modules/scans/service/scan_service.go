@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/aarcsx/krishaksh-backend/internal/models"
-	"github.com/aarcsx/krishaksh-backend/internal/modules/scans/dto"
-	"github.com/aarcsx/krishaksh-backend/internal/modules/scans/repository"
-	"github.com/aarcsx/krishaksh-backend/pkg/queue"
-	"github.com/aarcsx/krishaksh-backend/pkg/s3"
+	"github.com/aarcsx/krisho-backend/internal/models"
+	"github.com/aarcsx/krisho-backend/internal/modules/scans/dto"
+	"github.com/aarcsx/krisho-backend/internal/modules/scans/repository"
+	"github.com/aarcsx/krisho-backend/pkg/queue"
+	"github.com/aarcsx/krisho-backend/pkg/s3"
 	"github.com/google/uuid"
 )
 

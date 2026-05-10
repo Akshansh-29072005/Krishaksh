@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/aarcsx/krishaksh-backend/internal/database"
+	"github.com/aarcsx/krisho-backend/internal/database"
 	"github.com/google/uuid"
 )
 

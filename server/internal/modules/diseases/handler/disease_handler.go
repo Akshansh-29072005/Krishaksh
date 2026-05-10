@@ -3,9 +3,9 @@ package handler
 import (
 	"net/http"
 
-	"github.com/aarcsx/krishaksh-backend/internal/core/response"
-	"github.com/aarcsx/krishaksh-backend/internal/models"
-	diseaseRepo "github.com/aarcsx/krishaksh-backend/internal/modules/diseases/repository"
+	"github.com/aarcsx/krisho-backend/internal/core/response"
+	"github.com/aarcsx/krisho-backend/internal/models"
+	diseaseRepo "github.com/aarcsx/krisho-backend/internal/modules/diseases/repository"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )

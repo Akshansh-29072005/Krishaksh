@@ -5,10 +5,10 @@ import (
 	"encoding/json"
 	"errors"
 
-	"github.com/aarcsx/krishaksh-backend/internal/models"
-	cartRepo "github.com/aarcsx/krishaksh-backend/internal/modules/cart/repository"
-	orderRepo "github.com/aarcsx/krishaksh-backend/internal/modules/orders/repository"
-	productRepo "github.com/aarcsx/krishaksh-backend/internal/modules/products/repository"
+	"github.com/aarcsx/krisho-backend/internal/models"
+	cartRepo "github.com/aarcsx/krisho-backend/internal/modules/cart/repository"
+	orderRepo "github.com/aarcsx/krisho-backend/internal/modules/orders/repository"
+	productRepo "github.com/aarcsx/krisho-backend/internal/modules/products/repository"
 	"github.com/google/uuid"
 )
 

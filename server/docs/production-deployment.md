@@ -1,4 +1,4 @@
-# Krishaksh Production Deployment (AWS)
+# Krisho Production Deployment (AWS)
 
 ## Architecture
 - EC2 instance(s): run Docker Compose stack (`api`, `worker`, `redis`, `nginx`, `prometheus`).

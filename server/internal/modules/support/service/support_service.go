@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/aarcsx/krishaksh-backend/internal/models"
-	"github.com/aarcsx/krishaksh-backend/internal/modules/support/dto"
-	"github.com/aarcsx/krishaksh-backend/internal/modules/support/repository"
+	"github.com/aarcsx/krisho-backend/internal/models"
+	"github.com/aarcsx/krisho-backend/internal/modules/support/dto"
+	"github.com/aarcsx/krisho-backend/internal/modules/support/repository"
 	"github.com/google/uuid"
 )
 

@@ -4,10 +4,10 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/aarcsx/krishaksh-backend/internal/core/response"
-	"github.com/aarcsx/krishaksh-backend/internal/models"
-	"github.com/aarcsx/krishaksh-backend/internal/modules/admin/dto"
-	"github.com/aarcsx/krishaksh-backend/internal/modules/admin/service"
+	"github.com/aarcsx/krisho-backend/internal/core/response"
+	"github.com/aarcsx/krisho-backend/internal/models"
+	"github.com/aarcsx/krisho-backend/internal/modules/admin/dto"
+	"github.com/aarcsx/krisho-backend/internal/modules/admin/service"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )

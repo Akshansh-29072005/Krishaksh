@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aarcsx/krishaksh-backend/internal/ai/providers"
-	"github.com/aarcsx/krishaksh-backend/internal/observability"
+	"github.com/aarcsx/krisho-backend/internal/ai/providers"
+	"github.com/aarcsx/krisho-backend/internal/observability"
 )
 
 type Manager struct {
