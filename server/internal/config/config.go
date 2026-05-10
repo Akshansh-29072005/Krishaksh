@@ -55,6 +55,8 @@ func getEnvOrDefault(key, fallback string) string {
 
 func (c *Config) Validate() error {
 	if c.DatabaseURL == "" {
+		// Log specific error to help debugging
+		log.Println("error: DATABASE_URL environment variable is empty")
 		return errors.New("DATABASE_URL is required for Supabase connection")
 	}
 	if c.ServerPort == "" {
