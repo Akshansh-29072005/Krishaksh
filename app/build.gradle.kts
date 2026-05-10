@@ -41,14 +41,14 @@ android {
             initWith(getByName("release"))
             applicationIdSuffix = ".staging"
             matchingFallbacks.add("release")
-            buildConfigField("String", "BASE_URL", "\"https://api.staging.krisho.com/v1/\"")
+            buildConfigField("String", "BASE_URL", "\"https://api.staging.krisho.aarcsx.com/v1/\"")
             manifestPlaceholders["appLabel"] = "Krisho Staging"
         }
         release {
             isMinifyEnabled = true
             isShrinkResources = true
             signingConfig = signingConfigs.getByName("release")
-            buildConfigField("String", "BASE_URL", "\"https://api.krisho.com/v1/\"")
+            buildConfigField("String", "BASE_URL", "\"https://api.krisho.aarcsx.com/v1/\"")
             manifestPlaceholders["appLabel"] = "Krisho"
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
