@@ -1,8 +1,11 @@
-version: '3.9'
-
 x-common-env: &common-env
   SERVER_ENV: production
-  DATABASE_URL: ${DATABASE_URL}
+  DATABASE_URL: "${DATABASE_URL}"
+  # Old Individual Variables (Required by some legacy scripts)
+  DB_HOST: "${DB_HOST:-unused}"
+  DB_USER: "${DB_USER:-unused}"
+  DB_PASSWORD: "${DB_PASSWORD:-unused}"
+  DB_NAME: "${DB_NAME:-unused}"
   REDIS_ADDR: redis:6379
   JWT_SECRET: ${JWT_SECRET}
   RAZORPAY_KEY_ID: ${RAZORPAY_KEY_ID}
