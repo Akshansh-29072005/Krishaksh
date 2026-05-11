@@ -24,17 +24,17 @@ android {
 
     signingConfigs {
         create("release") {
-            storeFile = file("release-key.jks")
-            storePassword = System.getenv("RELEASE_STORE_PASSWORD")
-            keyAlias = System.getenv("RELEASE_KEY_ALIAS")
-            keyPassword = System.getenv("RELEASE_KEY_PASSWORD")
+            storeFile = file("../krisho-prod-key.jks")
+            storePassword = "29072005"
+            keyAlias = "key0"
+            keyPassword = "29072005"
         }
     }
 
     buildTypes {
         debug {
-            applicationIdSuffix = ".debug"
-            buildConfigField("String", "BASE_URL", "\"http://10.0.2.2:8080/api/v1/\"")
+            signingConfig = signingConfigs.getByName("release")
+            buildConfigField("String", "BASE_URL", "\"http://192.168.31.102/api/v1/\"")
             manifestPlaceholders["appLabel"] = "Krisho Dev"
         }
         create("staging") {
@@ -109,6 +109,7 @@ dependencies {
     implementation(libs.retrofit.converter.gson)
     implementation(libs.okhttp.logging)
     implementation(libs.play.services.auth)
+    implementation(libs.play.services.location)
 
     // Images
     implementation(libs.coil.compose)
