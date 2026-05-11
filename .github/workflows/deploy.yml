@@ -1,0 +1,40 @@
+name: Production Deployment
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+
+      - name: Run Tests
+        run: |
+          cd server
+          go test ./...
+
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: akshansh
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd ~/AndroidStudioProjects/Krishaksh/server
+            git pull origin main
+            
+            # Use docker-compose.prod.yml with the existing .env file
+            echo "Deploying Krisho Backend..."
+            docker compose -f docker-compose.prod.yml build --pull api worker
+            docker compose -f docker-compose.prod.yml up -d --remove-orphans
+            
+            echo "Deployment finished successfully."
