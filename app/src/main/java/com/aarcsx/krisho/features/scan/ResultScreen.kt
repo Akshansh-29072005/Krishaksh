@@ -52,7 +52,7 @@ fun ResultScreen(
                     ) {
                         Column {
                             AsyncImage(
-                                model = "file:///home/akshansh/.gemini/antigravity/brain/ebfaf9b6-f281-4ce2-a0dc-749993e3e660/potato_leaf_blight_1778254271532.png",
+                                model = result.imageUrl,
                                 contentDescription = null,
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -109,19 +109,9 @@ fun ResultScreen(
                 item { Spacer(modifier = Modifier.height(24.dp)) }
 
                 item {
-                    ResultSection("Symptoms", result.symptoms)
-                }
-
-                item { Spacer(modifier = Modifier.height(24.dp)) }
-
-                item {
-                    ResultSection("Prevention", result.prevention)
-                }
-
-                item { Spacer(modifier = Modifier.height(24.dp)) }
-
-                item {
-                    ResultSection("Treatment", result.treatment)
+                    if (result.symptoms.isNotBlank()) {
+                        ResultSection("Symptoms", result.symptoms)
+                    }
                 }
 
                 item { Spacer(modifier = Modifier.height(32.dp)) }

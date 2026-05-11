@@ -19,6 +19,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+import androidx.activity.enableEdgeToEdge
+
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
@@ -31,6 +33,7 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         
         lifecycleScope.launch {

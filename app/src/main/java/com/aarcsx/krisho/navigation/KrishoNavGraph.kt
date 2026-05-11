@@ -5,6 +5,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -139,16 +140,22 @@ fun KrishoNavGraph(
             arguments = listOf(navArgument("cropName") { type = NavType.StringType })
         ) { backStackEntry ->
             val cropName = backStackEntry.arguments?.getString("cropName") ?: ""
+            val scanViewModel: ScanViewModel = hiltViewModel()
             ScanScreen(
                 cropName = cropName,
                 onBackClick = { navController.popBackStack() },
                 onCaptured = { result ->
                     navController.navigate(Screen.Result.route)
-                }
+                },
+                viewModel = scanViewModel
             )
         }
         composable(Screen.Result.route) {
-            val scanViewModel: ScanViewModel = hiltViewModel()
+            // Get the ViewModel from the PREVIOUS backstack entry (ScanScreen)
+            val parentEntry = remember(it) {
+                navController.getBackStackEntry(Screen.Scan.route)
+            }
+            val scanViewModel: ScanViewModel = hiltViewModel(parentEntry)
             val uiState by scanViewModel.uiState.collectAsState()
             
             if (uiState.result != null) {

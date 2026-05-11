@@ -54,7 +54,6 @@ fun ScanScreen(
     LaunchedEffect(uiState.result) {
         uiState.result?.let {
             onCaptured(it)
-            viewModel.reset()
         }
     }
 

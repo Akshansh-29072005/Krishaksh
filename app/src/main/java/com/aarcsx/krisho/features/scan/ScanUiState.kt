@@ -4,6 +4,7 @@ import androidx.compose.runtime.Immutable
 
 @Immutable
 data class ScanResult(
+    val imageUrl: String,
     val diseaseName: String,
     val confidence: String,
     val symptoms: String,

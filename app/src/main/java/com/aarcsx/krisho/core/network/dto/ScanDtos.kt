@@ -13,6 +13,7 @@ data class ScanDto(
     val crop_type: String,
     val prediction_status: String,
     val disease_name: String? = null,
+    val ai_symptoms: List<String>? = null,
     val confidence_score: Double? = null,
     val created_at: String
 )

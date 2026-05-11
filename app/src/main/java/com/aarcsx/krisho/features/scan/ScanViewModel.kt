@@ -46,6 +46,7 @@ class ScanViewModel @Inject constructor(
                     _uiState.value = _uiState.value.copy(
                         isAnalyzing = false,
                         result = ScanResult(
+                            imageUrl = s.imageUrl,
                             diseaseName = s.diseaseName,
                             confidence = s.confidence,
                             symptoms = s.symptoms,

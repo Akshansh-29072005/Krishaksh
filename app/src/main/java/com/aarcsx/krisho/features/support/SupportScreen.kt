@@ -75,7 +75,9 @@ fun SupportScreen(
                             shape = RoundedCornerShape(16.dp),
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = ForestGreen,
-                                cursorColor = ForestGreen
+                                cursorColor = ForestGreen,
+                                focusedTextColor = Color.Black,
+                                unfocusedTextColor = Color.Black.copy(alpha = 0.8f)
                             )
                         )
 
@@ -198,7 +200,9 @@ fun SupportScreen(
                                     modifier = Modifier.fillMaxWidth(),
                                     colors = OutlinedTextFieldDefaults.colors(
                                         focusedBorderColor = ForestGreen,
-                                        focusedLabelColor = ForestGreen
+                                        focusedLabelColor = ForestGreen,
+                                        focusedTextColor = Color.Black,
+                                        unfocusedTextColor = Color.Black
                                     )
                                 )
                             },
