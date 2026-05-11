@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aarcsx.krisho.core.common.ApiResult
 import com.aarcsx.krisho.core.repository.AuthRepository
+import com.aarcsx.krisho.core.auth.GoogleSignInManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,7 +21,8 @@ data class AuthUiState(
 
 @HiltViewModel
 class AuthViewModel @Inject constructor(
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    val googleSignInManager: GoogleSignInManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AuthUiState())

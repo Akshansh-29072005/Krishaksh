@@ -10,7 +10,7 @@ import javax.inject.Singleton
 
 @Singleton
 class GoogleSignInManager @Inject constructor(
-    @ApplicationContext context: Context
+    @ApplicationContext private val context: Context
 ) {
     private val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
         .requestIdToken("248483110576-913ukuatgdpnacge6lp598stqlqiman0.apps.googleusercontent.com")

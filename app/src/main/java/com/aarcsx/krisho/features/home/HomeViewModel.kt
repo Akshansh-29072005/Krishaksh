@@ -66,7 +66,7 @@ class HomeViewModel @Inject constructor(
 
                 HomeUiState(
                     userName = profile?.name ?: "Farmer",
-                    location = weatherData?.location_name ?: profile?.village ?: "India",
+                    location = weatherData?.location_name ?: "India",
                     weather = weatherData?.let {
                         WeatherInfo(
                             temperature = it.temperature,

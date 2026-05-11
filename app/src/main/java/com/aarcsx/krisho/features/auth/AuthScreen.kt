@@ -14,8 +14,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import com.aarcsx.krisho.R
 import com.aarcsx.krisho.core.designsystem.components.ForestGreen
+import com.aarcsx.krisho.core.auth.GoogleSignInManager
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import androidx.compose.ui.platform.LocalContext
 
 @Composable
 fun AuthScreen(
@@ -23,6 +28,38 @@ fun AuthScreen(
     viewModel: AuthViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
+    
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        android.util.Log.d("AuthScreen", "Result received: ${result.resultCode}")
+        
+        // If result is 0 (Canceled), the user backed out or play services is broken
+        if (result.resultCode == 0) {
+            android.util.Log.e("AuthScreen", "Sign-in was canceled or failed at the activity level")
+        }
+
+        val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+        try {
+            val account = task.getResult(com.google.android.gms.common.api.ApiException::class.java)
+            android.util.Log.d("AuthScreen", "Token received successfully")
+            viewModel.onGoogleSignInResult(account?.idToken)
+        } catch (e: com.google.android.gms.common.api.ApiException) {
+            // Log the error code and check context
+            android.util.Log.e("AuthScreen", "Google Sign In failed: ${e.statusCode}")
+            
+            if (e.statusCode == 10) {
+                android.util.Log.e("AuthScreen", "Error 10: Potential misconfiguration in Google Cloud Console.")
+                android.util.Log.e("AuthScreen", "Check: Package: com.aarcsx.krisho, SHA1: 7D:D6:86:90:A8:8F:BE:63:EE:5C:72:26:7F:8C:A6:03:D0:31:AB:27")
+            }
+            
+            viewModel.onGoogleSignInResult(null)
+        } catch (e: Exception) {
+            android.util.Log.e("AuthScreen", "General error: ${e.message}", e)
+            viewModel.onGoogleSignInResult(null)
+        }
+    }
 
     LaunchedEffect(uiState.isSuccess) {
         if (uiState.isSuccess) {
@@ -68,9 +105,7 @@ fun AuthScreen(
             // Google Sign In Button
             Button(
                 onClick = { 
-                    // In a real app, this would trigger the Google Sign-In intent.
-                    // For now, we'll simulate the ID token for demo purposes.
-                    viewModel.onGoogleSignInResult("mock_google_id_token")
+                    launcher.launch(viewModel.googleSignInManager.client.signInIntent)
                 },
                 modifier = Modifier
                     .fillMaxWidth()
