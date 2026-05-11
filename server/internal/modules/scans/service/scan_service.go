@@ -89,9 +89,33 @@ func (s *scanServiceImpl) ProcessUpload(ctx context.Context, userID uuid.UUID, r
 }
 
 func (s *scanServiceImpl) GetScanHistory(ctx context.Context, userID uuid.UUID) ([]*models.Scan, error) {
-	return s.repo.GetUserScans(ctx, userID)
+	scans, err := s.repo.GetUserScans(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Inject presigned URLs so mobile app can view private S3 images
+	for _, scan := range scans {
+		if key, err := s.s3.ExtractKeyFromURL(scan.ImageURL); err == nil {
+			if presigned, err := s.s3.GeneratePresignedGetURL(ctx, s.bucket, key, 1*time.Hour); err == nil {
+				scan.ImageURL = presigned
+			}
+		}
+	}
+	return scans, nil
 }
 
 func (s *scanServiceImpl) GetScanDetails(ctx context.Context, userID uuid.UUID, scanID uuid.UUID) (*models.Scan, error) {
-	return s.repo.GetScanByID(ctx, scanID, userID)
+	scan, err := s.repo.GetScanByID(ctx, scanID, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Inject presigned URL
+	if key, err := s.s3.ExtractKeyFromURL(scan.ImageURL); err == nil {
+		if presigned, err := s.s3.GeneratePresignedGetURL(ctx, s.bucket, key, 1*time.Hour); err == nil {
+			scan.ImageURL = presigned
+		}
+	}
+	return scan, nil
 }

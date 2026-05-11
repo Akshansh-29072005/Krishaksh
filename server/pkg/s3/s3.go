@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net/url"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -16,6 +18,7 @@ type S3Client interface {
 	UploadImage(ctx context.Context, bucket string, key string, body io.Reader) (string, error)
 	GeneratePresignedURL(ctx context.Context, bucket string, key string, expiration time.Duration) (string, error)
 	GeneratePresignedGetURL(ctx context.Context, bucket string, key string, expiration time.Duration) (string, error)
+	ExtractKeyFromURL(rawURL string) (string, error)
 }
 
 type s3ClientImpl struct {
@@ -78,4 +81,14 @@ func (s *s3ClientImpl) GeneratePresignedGetURL(ctx context.Context, bucket strin
 	}
 
 	return presignedReq.URL, nil
+}
+
+func (s *s3ClientImpl) ExtractKeyFromURL(rawURL string) (string, error) {
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return "", err
+	}
+	// Path is usually /bucket/key or /key depending on the endpoint
+	path := strings.TrimPrefix(u.Path, "/")
+	return path, nil
 }

@@ -53,7 +53,7 @@ func (w *ScanWorker) HandleScanAnalyzeTask(ctx context.Context, t *asynq.Task) e
 		status := "FAILED"
 		provider := "none"
 		meta := map[string]interface{}{"degraded_mode": true, "reason": "provider_failure"}
-		_ = w.repo.UpdateAIInference(ctx, scanID, status, &provider, nil, &errMsg, meta)
+		_ = w.repo.UpdateAIInference(ctx, scanID, status, &provider, nil, nil, nil, &errMsg, meta)
 		observability.M.Inc("worker_errors_total:scan")
 		observability.InitLogger().Error("worker_scan_failed", "scan_id", scanID.String(), "error", errMsg)
 		return err
@@ -65,6 +65,9 @@ func (w *ScanWorker) HandleScanAnalyzeTask(ctx context.Context, t *asynq.Task) e
 	}
 	provider := result.Provider
 	confidence := result.PrimaryPrediction.Confidence
+	diseaseName := result.PrimaryPrediction.Disease
+	aiSymptoms := result.PrimaryPrediction.Symptoms
+
 	meta := map[string]interface{}{
 		"prompt_version":   result.PromptVersion,
 		"notes":            result.Response.Notes,
@@ -74,7 +77,7 @@ func (w *ScanWorker) HandleScanAnalyzeTask(ctx context.Context, t *asynq.Task) e
 		"preprocess_bytes": result.InputBytes,
 		"output_bytes":     result.OutputBytes,
 	}
-	if err := w.repo.UpdateAIInference(ctx, scanID, status, &provider, &confidence, nil, meta); err != nil {
+	if err := w.repo.UpdateAIInference(ctx, scanID, status, &provider, &confidence, &diseaseName, aiSymptoms, nil, meta); err != nil {
 		return err
 	}
 

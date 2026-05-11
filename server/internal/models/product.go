@@ -25,21 +25,21 @@ type ProductCategory struct {
 
 // Product is the core commerce entity
 type Product struct {
-	ID                uuid.UUID `db:"id"`
-	CompanyID         uuid.UUID `db:"company_id"`
-	CategoryID        uuid.UUID `db:"category_id"`
-	Name              string    `db:"name"`
-	Description       string    `db:"description"`
-	ImageURL          *string   `db:"image_url"`
-	Price             float64   `db:"price"`
-	Currency          string    `db:"currency"` // INR
-	Unit              string    `db:"unit"`     // e.g., "500ml", "1kg"
-	IsSponsored       bool      `db:"is_sponsored"`
-	SponsoredPriority int       `db:"sponsored_priority"` // higher = ranked first in listing
-	IsActive          bool      `db:"is_active"`
-	StockAvailable    bool      `db:"stock_available"`
-	StockQuantity     int       `db:"stock_quantity"`
-	CropType          string    `db:"crop_type"` // primary crop compatibility
-	CreatedAt         time.Time `db:"created_at"`
-	UpdatedAt         time.Time `db:"updated_at"`
+	ID                uuid.UUID `db:"id" json:"id"`
+	CompanyID         uuid.UUID `db:"company_id" json:"company_id"`
+	CategoryID        uuid.UUID `db:"category_id" json:"category_id"`
+	Name              string    `db:"name" json:"name"`
+	Description       string    `db:"description" json:"description"`
+	ImageURL          *string   `db:"image_url" json:"image_url"`
+	Price             float64   `db:"price" json:"price"`
+	Currency          string    `db:"currency" json:"currency"`
+	Unit              string    `db:"unit" json:"unit"`
+	IsSponsored       bool      `db:"is_sponsored" json:"is_sponsored"`
+	SponsoredPriority int       `db:"sponsored_priority" json:"sponsored_priority"`
+	IsActive          bool      `db:"is_active" json:"is_active"`
+	StockAvailable    bool      `db:"stock_available" json:"stock_available"`
+	StockQuantity     int       `db:"stock_quantity" json:"stock_quantity"`
+	CropType          string    `db:"crop_type" json:"crop_type"`
+	CreatedAt         time.Time `db:"created_at" json:"created_at"`
+	UpdatedAt         time.Time `db:"updated_at" json:"updated_at"`
 }

@@ -15,7 +15,7 @@ type ScanRepository interface {
 	GetUserScans(ctx context.Context, userID uuid.UUID) ([]*models.Scan, error)
 	UpdateScanStatus(ctx context.Context, id uuid.UUID, status string) error
 	UpdateScanResult(ctx context.Context, id uuid.UUID, diseaseID *uuid.UUID, status string) error
-	UpdateAIInference(ctx context.Context, id uuid.UUID, status string, provider *string, confidence *float64, processingErr *string, metadata map[string]interface{}) error
+	UpdateAIInference(ctx context.Context, id uuid.UUID, status string, provider *string, confidence *float64, diseaseName *string, symptoms []string, processingErr *string, metadata map[string]interface{}) error
 }
 
 type scanRepoImpl struct {
@@ -34,19 +34,19 @@ func (r *scanRepoImpl) CreateScan(ctx context.Context, scan *models.Scan) error 
 }
 
 func (r *scanRepoImpl) GetScanByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*models.Scan, error) {
-	query := `SELECT id, user_id, image_url, crop_type, prediction_status, disease_id, ai_provider, confidence_score, processing_error, ai_metadata, completed_at, created_at 
+	query := `SELECT id, user_id, image_url, crop_type, prediction_status, disease_id, disease_name, ai_symptoms, ai_provider, confidence_score, processing_error, ai_metadata, completed_at, created_at 
 	          FROM scans WHERE id = $1 AND user_id = $2 LIMIT 1`
 
 	scan := &models.Scan{}
 	err := r.db.Pool.QueryRow(ctx, query, id, userID).Scan(
 		&scan.ID, &scan.UserID, &scan.ImageURL, &scan.CropType,
-		&scan.PredictionStatus, &scan.DiseaseID, &scan.AIProvider, &scan.ConfidenceScore, &scan.ProcessingError, &scan.AIMetadata, &scan.CompletedAt, &scan.CreatedAt,
+		&scan.PredictionStatus, &scan.DiseaseID, &scan.DiseaseName, &scan.AISymptoms, &scan.AIProvider, &scan.ConfidenceScore, &scan.ProcessingError, &scan.AIMetadata, &scan.CompletedAt, &scan.CreatedAt,
 	)
 	return scan, err
 }
 
 func (r *scanRepoImpl) GetUserScans(ctx context.Context, userID uuid.UUID) ([]*models.Scan, error) {
-	query := `SELECT id, user_id, image_url, crop_type, prediction_status, disease_id, ai_provider, confidence_score, processing_error, ai_metadata, completed_at, created_at 
+	query := `SELECT id, user_id, image_url, crop_type, prediction_status, disease_id, disease_name, ai_symptoms, ai_provider, confidence_score, processing_error, ai_metadata, completed_at, created_at 
 	          FROM scans WHERE user_id = $1 ORDER BY created_at DESC LIMIT 50`
 
 	rows, err := r.db.Pool.Query(ctx, query, userID)
@@ -59,7 +59,7 @@ func (r *scanRepoImpl) GetUserScans(ctx context.Context, userID uuid.UUID) ([]*m
 	for rows.Next() {
 		scan := &models.Scan{}
 		err := rows.Scan(&scan.ID, &scan.UserID, &scan.ImageURL, &scan.CropType,
-			&scan.PredictionStatus, &scan.DiseaseID, &scan.AIProvider, &scan.ConfidenceScore, &scan.ProcessingError, &scan.AIMetadata, &scan.CompletedAt, &scan.CreatedAt)
+			&scan.PredictionStatus, &scan.DiseaseID, &scan.DiseaseName, &scan.AISymptoms, &scan.AIProvider, &scan.ConfidenceScore, &scan.ProcessingError, &scan.AIMetadata, &scan.CompletedAt, &scan.CreatedAt)
 		if err != nil {
 			return nil, err
 		}
@@ -80,15 +80,15 @@ func (r *scanRepoImpl) UpdateScanResult(ctx context.Context, id uuid.UUID, disea
 	return err
 }
 
-func (r *scanRepoImpl) UpdateAIInference(ctx context.Context, id uuid.UUID, status string, provider *string, confidence *float64, processingErr *string, metadata map[string]interface{}) error {
+func (r *scanRepoImpl) UpdateAIInference(ctx context.Context, id uuid.UUID, status string, provider *string, confidence *float64, diseaseName *string, symptoms []string, processingErr *string, metadata map[string]interface{}) error {
 	meta := []byte(`{}`)
 	if metadata != nil {
 		b, _ := json.Marshal(metadata)
 		meta = b
 	}
 	query := `UPDATE scans
-	          SET prediction_status = $1, ai_provider = $2, confidence_score = $3, processing_error = $4, ai_metadata = $5, completed_at = NOW()
-	          WHERE id = $6`
-	_, err := r.db.Pool.Exec(ctx, query, status, provider, confidence, processingErr, meta, id)
+	          SET prediction_status = $1, ai_provider = $2, confidence_score = $3, disease_name = $4, ai_symptoms = $5, processing_error = $6, ai_metadata = $7, completed_at = NOW()
+	          WHERE id = $8`
+	_, err := r.db.Pool.Exec(ctx, query, status, provider, confidence, diseaseName, symptoms, processingErr, meta, id)
 	return err
 }
