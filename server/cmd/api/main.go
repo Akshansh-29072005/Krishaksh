@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -96,10 +97,6 @@ func main() {
 	r := gin.New()
 	r.Use(middleware.RecoveryJSON(), middleware.RequestContext(), middleware.RequestTiming(), middleware.ErrorTracker(), middleware.ValidationGuard(), middleware.UploadSizeLimit(10<<20), middleware.RateLimit(240), middleware.AbusePrevention())
 
-	r.GET("/health", func(c *gin.Context) {
-		c.JSON(200, gin.H{"status": "UP", "timestamp": time.Now()})
-	})
-
 	r.GET("/weather", func(c *gin.Context) {
 		// Mock weather implementation for rebrand delivery
 		c.JSON(200, gin.H{
@@ -159,8 +156,7 @@ func main() {
 	promptMgr := internalAI.NewPromptManager("internal/ai/prompts")
 	aiMgr := internalAI.NewManager(
 		[]aiProviders.VisionProvider{
-			aiProviders.NewGeminiProvider(os.Getenv("GEMINI_API_KEY")),
-			aiProviders.NewOpenAIProvider(os.Getenv("OPENAI_API_KEY")),
+			aiProviders.NewGeminiProvider(strings.TrimSpace(os.Getenv("GEMINI_API_KEY"))),
 		},
 		promptMgr,
 		"vision_v1",

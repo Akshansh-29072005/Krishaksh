@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -49,8 +50,7 @@ func main() {
 	promptMgr := internalAI.NewPromptManager("internal/ai/prompts")
 	aiMgr := internalAI.NewManager(
 		[]aiProviders.VisionProvider{
-			aiProviders.NewGeminiProvider(os.Getenv("GEMINI_API_KEY")),
-			aiProviders.NewOpenAIProvider(os.Getenv("OPENAI_API_KEY")),
+			aiProviders.NewGeminiProvider(strings.TrimSpace(os.Getenv("GEMINI_API_KEY"))),
 		},
 		promptMgr,
 		"vision_v1",

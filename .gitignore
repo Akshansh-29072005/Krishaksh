@@ -18,3 +18,4 @@ local.properties
 .env.*
 *.jks
 google-services.json
+.aider*
