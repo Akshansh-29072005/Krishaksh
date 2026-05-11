@@ -96,6 +96,24 @@ func main() {
 	r := gin.New()
 	r.Use(middleware.RecoveryJSON(), middleware.RequestContext(), middleware.RequestTiming(), middleware.ErrorTracker(), middleware.ValidationGuard(), middleware.UploadSizeLimit(10<<20), middleware.RateLimit(240), middleware.AbusePrevention())
 
+	r.GET("/health", func(c *gin.Context) {
+		c.JSON(200, gin.H{"status": "UP", "timestamp": time.Now()})
+	})
+
+	r.GET("/weather", func(c *gin.Context) {
+		// Mock weather implementation for rebrand delivery
+		c.JSON(200, gin.H{
+			"status": "success",
+			"data": gin.H{
+				"temperature":   "28°C",
+				"condition":     "Sunny",
+				"humidity":      "40%",
+				"wind_speed":    "12 km/h",
+				"location_name": "New Delhi, India",
+			},
+		})
+	})
+
 	authRepository := authRepo.NewAuthRepository(db)
 	authSvc := authService.NewAuthService(authRepository)
 	authHdlr := authHandler.NewAuthHandler(authSvc)
