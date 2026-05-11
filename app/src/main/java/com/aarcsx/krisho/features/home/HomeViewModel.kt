@@ -6,6 +6,8 @@ import com.aarcsx.krisho.core.common.ApiResult
 import com.aarcsx.krisho.core.repository.ScanRepository
 import com.aarcsx.krisho.core.repository.UserRepository
 import com.aarcsx.krisho.core.network.api.UserApiService
+import com.aarcsx.krisho.core.network.api.WeatherApiService
+import com.aarcsx.krisho.core.util.LocationProvider
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -23,7 +25,9 @@ import javax.inject.Inject
 class HomeViewModel @Inject constructor(
     private val userRepository: UserRepository,
     private val scanRepository: ScanRepository,
-    private val userApiService: UserApiService
+    private val userApiService: UserApiService,
+    private val weatherApiService: WeatherApiService,
+    private val locationProvider: LocationProvider
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -44,20 +48,33 @@ class HomeViewModel @Inject constructor(
                     } catch (e: Exception) {
                         emit(null)
                     }
+                },
+                flow {
+                    try {
+                        val location = locationProvider.getCurrentLocation()
+                        val lat = location?.latitude ?: 28.6139
+                        val lon = location?.longitude ?: 77.2090
+                        emit(weatherApiService.getCurrentWeather(lat, lon))
+                    } catch (e: Exception) {
+                        emit(null)
+                    }
                 }
-            ) { profileRes, scans, adsRes ->
+            ) { profileRes, scans, adsRes, weatherRes ->
                 val profile = (profileRes as? ApiResult.Success)?.data
                 val ads = adsRes?.body()?.data ?: emptyList()
+                val weatherData = weatherRes?.body()?.data
 
                 HomeUiState(
                     userName = profile?.name ?: "Farmer",
-                    location = profile?.email ?: "India",
-                    weather = WeatherInfo(
-                        temperature = "30°C",
-                        condition = "Clear Sky",
-                        humidity = "45%",
-                        wind = "10 km/h"
-                    ),
+                    location = weatherData?.location_name ?: profile?.village ?: "India",
+                    weather = weatherData?.let {
+                        WeatherInfo(
+                            temperature = it.temperature,
+                            condition = it.condition,
+                            humidity = it.humidity,
+                            wind = it.wind_speed
+                        )
+                    },
                     alerts = emptyList(),
                     recentScans = scans.take(5).map { entity ->
                         RecentScan(

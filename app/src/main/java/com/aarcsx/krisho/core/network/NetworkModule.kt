@@ -82,4 +82,5 @@ object NetworkModule {
     @Provides @Singleton fun provideProductApi(retrofit: Retrofit): ProductApiService = retrofit.create(ProductApiService::class.java)
     @Provides @Singleton fun provideCommerceApi(retrofit: Retrofit): CommerceApiService = retrofit.create(CommerceApiService::class.java)
     @Provides @Singleton fun provideUserApi(retrofit: Retrofit): UserApiService = retrofit.create(UserApiService::class.java)
+    @Provides @Singleton fun provideWeatherApi(retrofit: Retrofit): WeatherApiService = retrofit.create(WeatherApiService::class.java)
 }

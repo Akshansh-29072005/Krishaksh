@@ -12,15 +12,23 @@ import javax.inject.Singleton
 @Singleton
 class ScanRepository @Inject constructor(
     private val scanDao: ScanDao,
-    private val remote: ScanRemoteDataSource
+    private val remote: ScanRemoteDataSource,
+    private val offlineSyncRepository: OfflineSyncRepository
 ) {
     fun getRecentScans(): Flow<List<ScanEntity>> = scanDao.getAllScans()
 
     suspend fun runScanLifecycle(cropName: String, imageBytes: ByteArray, contentType: String = "image/jpeg"): ApiResult<ScanEntity> {
-        val upload = when (val uploadRes = remote.getPresignedUrl(contentType)) {
+        val uploadRes = remote.getPresignedUrl(contentType)
+        if (uploadRes is ApiResult.Error) {
+             // If network error, we can't upload image now, so we "cache" the request for when online
+             // However, without the image bytes in DB (which is heavy), we'll just return error for now
+             // but saved the metadata if we had a local image URI.
+             return uploadRes
+        }
+        
+        val upload = when (uploadRes) {
             is ApiResult.Success -> uploadRes.data.data ?: return ApiResult.Error(message = "Failed upload-url response")
-            is ApiResult.Error -> return uploadRes
-            ApiResult.Loading -> return ApiResult.Error(message = "Unexpected loading state")
+            else -> return ApiResult.Error(message = "Unexpected state")
         }
 
         when (val uploadResult = remote.uploadToS3(upload.upload_url, imageBytes, contentType)) {

@@ -33,4 +33,7 @@ object DatabaseModule {
 
     @Provides
     fun provideSupportTicketDao(db: KrishoDatabase) = db.supportTicketDao()
+
+    @Provides
+    fun provideOfflineSyncDao(db: KrishoDatabase) = db.offlineSyncDao()
 }
