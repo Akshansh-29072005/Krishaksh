@@ -8,11 +8,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.lifecycleScope
 import com.aarcsx.krisho.core.common.LocaleManager
 import com.aarcsx.krisho.core.designsystem.theme.KrishoTheme
 import com.aarcsx.krisho.core.local.datastore.PreferencesManager
 import com.aarcsx.krisho.navigation.KrishoNavGraph
+import com.aarcsx.krisho.navigation.Screen
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -28,13 +32,20 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContent {
-            KrishoTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    KrishoNavGraph()
+        
+        lifecycleScope.launch {
+            preferencesManager.jwtToken.collect { token ->
+                val startDestination = if (token.isNullOrBlank()) Screen.Auth.route else Screen.Home.route
+                
+                setContent {
+                    KrishoTheme {
+                        Surface(
+                            modifier = Modifier.fillMaxSize(),
+                            color = MaterialTheme.colorScheme.background
+                        ) {
+                            KrishoNavGraph(startDestination = startDestination)
+                        }
+                    }
                 }
             }
         }

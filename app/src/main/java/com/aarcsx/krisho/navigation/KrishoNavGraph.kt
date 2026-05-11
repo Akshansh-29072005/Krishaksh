@@ -16,6 +16,12 @@ import androidx.navigation.compose.*
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.Alignment
+import com.aarcsx.krisho.core.designsystem.components.ForestGreen
 
 import com.aarcsx.krisho.features.home.HomeScreen
 import com.aarcsx.krisho.features.auth.AuthScreen
@@ -44,14 +50,15 @@ val bottomNavItems = listOf(
 
 @Composable
 fun KrishoNavGraph(
-    navController: NavHostController = rememberNavController()
+    navController: NavHostController = rememberNavController(),
+    startDestination: String = Screen.Auth.route
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
     NavHost(
         navController = navController,
-        startDestination = Screen.Auth.route
+        startDestination = startDestination
     ) {
         composable(Screen.Auth.route) {
             AuthScreen(onAuthSuccess = {
@@ -62,7 +69,7 @@ fun KrishoNavGraph(
         }
         composable(Screen.Home.route) {
             MainScaffold(navController) {
-                HomeScreen(onScanClick = { navController.navigate(Screen.Scan.route) })
+                HomeScreen(onScanClick = { navController.navigate(Screen.CropSelection.route) })
             }
         }
         composable(Screen.History.route) {
@@ -101,7 +108,12 @@ fun KrishoNavGraph(
                     onBackClick = { navController.popBackStack() },
                     onNavigateToHelp = { navController.navigate(Screen.HelpCenter.route) },
                     onNavigateToPrivacy = { navController.navigate(Screen.PrivacyPolicy.route) },
-                    onNavigateToTerms = { navController.navigate(Screen.TermsOfService.route) }
+                    onNavigateToTerms = { navController.navigate(Screen.TermsOfService.route) },
+                    onLogoutSuccess = {
+                        navController.navigate(Screen.Auth.route) {
+                            popUpTo(Screen.Home.route) { inclusive = true }
+                        }
+                    }
                 )
             }
         }
@@ -114,37 +126,49 @@ fun KrishoNavGraph(
         composable(Screen.TermsOfService.route) {
             TermsOfServiceScreen(onBackClick = { navController.popBackStack() })
         }
-        composable(Screen.Scan.route) {
-            ScanScreen(
+        composable(Screen.CropSelection.route) {
+            CropSelectionScreen(
                 onBackClick = { navController.popBackStack() },
-                onCaptured = { 
-                    navController.navigate(Screen.Loading.route)
+                onCropSelected = { cropName ->
+                    navController.navigate(Screen.Scan.createRoute(cropName))
                 }
             )
         }
-        composable(Screen.Loading.route) {
-            LaunchedEffect(Unit) {
-                kotlinx.coroutines.delay(2000)
-                navController.navigate(Screen.Result.route) {
-                    popUpTo(Screen.Loading.route) { inclusive = true }
+        composable(
+            route = Screen.Scan.route,
+            arguments = listOf(navArgument("cropName") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val cropName = backStackEntry.arguments?.getString("cropName") ?: ""
+            ScanScreen(
+                cropName = cropName,
+                onBackClick = { navController.popBackStack() },
+                onCaptured = { result ->
+                    navController.navigate(Screen.Result.route)
                 }
-            }
-            LoadingScreen()
+            )
         }
         composable(Screen.Result.route) {
-            val mockResult = ScanResult(
-                diseaseName = "Potato Late Blight",
-                confidence = "98%",
-                symptoms = "Dark, water-soaked spots on leaves that enlarge rapidly.",
-                prevention = "Use certified disease-free seeds and rotate crops.",
-                treatment = "Apply fungicide immediately. Remove infected plants.",
-                recommendationTitle = "Copper Fungicide",
-                recommendationDesc = "Effective against late blight in potatoes and tomatoes."
-            )
-            ResultScreen(
-                result = mockResult,
-                onBackClick = { navController.popBackStack(Screen.Home.route, false) }
-            )
+            val scanViewModel: ScanViewModel = hiltViewModel()
+            val uiState by scanViewModel.uiState.collectAsState()
+            
+            if (uiState.result != null) {
+                ResultScreen(
+                    result = uiState.result!!,
+                    onBackClick = { navController.popBackStack(Screen.Home.route, false) }
+                )
+            } else {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        CircularProgressIndicator(color = ForestGreen)
+                        if (uiState.error != null) {
+                            Text(uiState.error!!, color = Color.Red)
+                            Button(onClick = { navController.popBackStack() }) {
+                                Text("Go Back")
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }

@@ -13,7 +13,13 @@ class ScanRemoteDataSource @Inject constructor(
 ) : BaseRemoteDataSource() {
     suspend fun getPresignedUrl(contentType: String): ApiResult<ApiEnvelope<PresignedUploadDto>> = call { api.getUploadUrl(contentType) }
     suspend fun uploadToS3(uploadUrl: String, bytes: ByteArray, contentType: String): ApiResult<Unit> {
-        return when (val res = call { api.uploadToS3(uploadUrl, bytes.toRequestBody(contentType.toMediaTypeOrNull())) }) {
+        return when (val res = call {
+            api.uploadToS3(
+                uploadUrl,
+                contentType,
+                bytes.toRequestBody(contentType.toMediaTypeOrNull())
+            )
+        }) {
             is ApiResult.Success -> ApiResult.Success(Unit)
             is ApiResult.Error -> res
             ApiResult.Loading -> ApiResult.Loading

@@ -7,7 +7,10 @@ sealed class Screen(val route: String) {
     object Products : Screen("products")
     object Support : Screen("support")
     object Profile : Screen("profile")
-    object Scan : Screen("scan")
+    object CropSelection : Screen("crop_selection")
+    object Scan : Screen("scan/{cropName}") {
+        fun createRoute(cropName: String) = "scan/$cropName"
+    }
     object Result : Screen("result")
     object Loading : Screen("loading")
     object ProductDetail : Screen("product_detail/{productId}") {

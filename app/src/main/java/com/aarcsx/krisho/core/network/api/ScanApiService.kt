@@ -19,5 +19,9 @@ interface ScanApiService {
     suspend fun getRecommendations(@Path("scanId") scanId: String): Response<ApiEnvelope<RecommendationDto>>
 
     @PUT
-    suspend fun uploadToS3(@Url uploadUrl: String, @Body body: RequestBody): Response<Unit>
+    suspend fun uploadToS3(
+        @Url uploadUrl: String,
+        @Header("Content-Type") contentType: String,
+        @Body body: RequestBody
+    ): Response<Unit>
 }

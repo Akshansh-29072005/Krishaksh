@@ -1,6 +1,11 @@
 package com.aarcsx.krisho.core.network.dto
 
-data class PresignedUploadDto(val upload_url: String, val image_key: String)
+import com.google.gson.annotations.SerializedName
+
+data class PresignedUploadDto(
+    @SerializedName("presigned_url") val presigned_url: String,
+    @SerializedName("image_key") val image_key: String
+)
 data class CreateScanRequestDto(val crop_type: String, val image_key: String)
 data class ScanDto(
     val id: String,

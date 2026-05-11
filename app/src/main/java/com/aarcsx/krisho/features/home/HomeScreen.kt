@@ -124,27 +124,61 @@ private fun HomeContent(
 
         // 3. Weather + Alert Section
         AgriWeatherAlertRow(
-            temp = uiState.weather?.temperature ?: "28°C",
-            condition = uiState.weather?.condition ?: "Sunny",
-            windSpeed = "12 km/h",
-            weatherType = WeatherType.SUNNY,
-            alertTitle = uiState.alerts.firstOrNull()?.title ?: "No Alerts",
-            alertDesc = uiState.alerts.firstOrNull()?.description ?: "Your area is safe."
+            temp = uiState.weather?.temperature ?: "--°C",
+            condition = uiState.weather?.condition ?: "Checking...",
+            windSpeed = uiState.weather?.wind ?: "-- km/h",
+            weatherType = when (uiState.weather?.condition?.lowercase()) {
+                "sunny", "clear" -> WeatherType.SUNNY
+                "rain", "showers", "drizzle" -> WeatherType.RAINY
+                "cloudy", "overcast", "mist", "haze" -> WeatherType.CLOUDY
+                "storm", "thunderstorm" -> WeatherType.STORMY
+                else -> WeatherType.SUNNY
+            },
+            alertTitle = uiState.alerts.firstOrNull()?.title ?: "Safe Zone",
+            alertDesc = uiState.alerts.firstOrNull()?.description ?: "No disease outbreaks reported in ${uiState.location}."
         )
 
-        // 4. Sponsored Partners Section
-        val partners = listOf(
-            AdPartner("1", "GreenEarth Agri", "https://images.unsplash.com/photo-1599424423956-6f81014ccbe0?q=80&w=2169&auto=format&fit=crop"),
-            AdPartner("2", "EcoFarm Solutions", "https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?q=80&w=2187&auto=format&fit=crop"),
-            AdPartner("3", "BioCure Genetics", "https://images.unsplash.com/photo-1628352081506-83c43123ed6d?q=80&w=2196&auto=format&fit=crop"),
-            AdPartner("4", "AgriCorp Seeds", "https://images.unsplash.com/photo-1585314062340-f1a5a7c9328d?q=80&w=1000&auto=format&fit=crop")
-        )
-        AgriAdCarousel(partners = partners)
+        // 4. Featured Partners Section
+        if (uiState.recommendations.isNotEmpty()) {
+            AgriAdCarousel(partners = uiState.recommendations.map { AdPartner(it.id, it.title, it.imageUrl) })
+        } else {
+            // Default Fallback Partners
+            val partners = listOf(
+                AdPartner("1", "GreenEarth Agri", "https://images.unsplash.com/photo-1599424423956-6f81014ccbe0?q=80&w=2169&auto=format&fit=crop"),
+                AdPartner("2", "EcoFarm Solutions", "https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?q=80&w=2187&auto=format&fit=crop"),
+                AdPartner("3", "BioCure Genetics", "https://images.unsplash.com/photo-1628352081506-83c43123ed6d?q=80&w=2196&auto=format&fit=crop"),
+                AdPartner("4", "AgriCorp Seeds", "https://images.unsplash.com/photo-1585314062340-f1a5a7c9328d?q=80&w=1000&auto=format&fit=crop")
+            )
+            AgriAdCarousel(partners = partners)
+        }
 
-        // 5. Recommendation Section
-        AgriRecommendationCard(
-            title = "Rice Blast Prevention",
-            description = "Humidity is high. Use recommended fungicides to protect your crop.",
+        // 5. Recent Scans
+        if (uiState.recentScans.isNotEmpty()) {
+            AgriRecentScansRow(
+                scans = uiState.recentScans.map {
+                    RecentScanData(
+                        id = it.id,
+                        cropName = it.cropName,
+                        status = it.status,
+                        time = it.date,
+                        imageUrl = it.imageUrl,
+                        isHealthy = it.status.contains("Healthy", ignoreCase = true)
+                    )
+                },
+                onScanClick = { /* TODO */ }
+            )
+        }
+
+        // 6. Disease Prevention Recommendation
+        uiState.recommendations.firstOrNull()?.let { rec ->
+            AgriRecommendationCard(
+                title = rec.title,
+                description = rec.description,
+                onClick = { /* TODO */ }
+            )
+        } ?: AgriRecommendationCard(
+            title = "Stay Proactive",
+            description = "Keep scanning your crops regularly to detect diseases early.",
             onClick = { /* TODO */ }
         )
     }

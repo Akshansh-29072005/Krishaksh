@@ -77,9 +77,10 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    fun logout() {
+    fun logout(onSuccess: () -> Unit = {}) {
         viewModelScope.launch {
             userRepository.logout()
+            onSuccess()
         }
     }
 }

@@ -18,55 +18,57 @@ class ScanRepository @Inject constructor(
     fun getRecentScans(): Flow<List<ScanEntity>> = scanDao.getAllScans()
 
     suspend fun runScanLifecycle(cropName: String, imageBytes: ByteArray, contentType: String = "image/jpeg"): ApiResult<ScanEntity> {
-        val uploadRes = remote.getPresignedUrl(contentType)
-        if (uploadRes is ApiResult.Error) {
-             // If network error, we can't upload image now, so we "cache" the request for when online
-             // However, without the image bytes in DB (which is heavy), we'll just return error for now
-             // but saved the metadata if we had a local image URI.
-             return uploadRes
-        }
-        
-        val upload = when (uploadRes) {
-            is ApiResult.Success -> uploadRes.data.data ?: return ApiResult.Error(message = "Failed upload-url response")
-            else -> return ApiResult.Error(message = "Unexpected state")
-        }
+        return try {
+            val uploadRes = remote.getPresignedUrl(contentType)
+            if (uploadRes is ApiResult.Error) return uploadRes
+            
+            val upload = when (uploadRes) {
+                is ApiResult.Success -> uploadRes.data.data ?: return ApiResult.Error(message = "Failed upload-url response")
+                else -> return ApiResult.Error(message = "Unexpected state")
+            }
 
-        when (val uploadResult = remote.uploadToS3(upload.upload_url, imageBytes, contentType)) {
-            is ApiResult.Error -> return uploadResult
-            else -> Unit
-        }
+            when (val uploadResult = remote.uploadToS3(upload.presigned_url, imageBytes, contentType)) {
+                is ApiResult.Error -> return uploadResult
+                else -> Unit
+            }
 
-        val scan = when (val createRes = remote.createScan(cropName, upload.image_key)) {
-            is ApiResult.Success -> createRes.data.data ?: return ApiResult.Error(message = "Failed create-scan response")
-            is ApiResult.Error -> return createRes
-            ApiResult.Loading -> return ApiResult.Error(message = "Unexpected loading state")
-        }
+            val scan = when (val createRes = remote.createScan(cropName, upload.image_key)) {
+                is ApiResult.Success -> createRes.data.data ?: return ApiResult.Error(message = "Failed create-scan response")
+                is ApiResult.Error -> return createRes
+                ApiResult.Loading -> return ApiResult.Error(message = "Unexpected loading state")
+            }
 
-        val final = pollScan(scan.id) ?: scan
-        val rec = when (val recRes = remote.getRecommendations(scan.id)) {
-            is ApiResult.Success -> recRes.data.data
-            else -> null
-        }
+            // Increase polling window for slower AI providers
+            val final = pollScan(scan.id) ?: scan
+            
+            val rec = when (val recRes = remote.getRecommendations(scan.id)) {
+                is ApiResult.Success -> recRes.data.data
+                else -> null
+            }
 
-        val entity = ScanEntity(
-            cropName = final.crop_type,
-            imageUrl = final.image_url,
-            remoteScanId = final.id,
-            predictionStatus = final.prediction_status,
-            diseaseName = rec?.disease?.name ?: final.disease_name ?: "Pending",
-            confidence = final.confidence_score?.let { "${"%.1f".format(it)}%" } ?: "-",
-            symptoms = rec?.disease?.symptoms.orEmpty(),
-            prevention = rec?.disease?.prevention.orEmpty(),
-            treatment = rec?.disease?.treatment.orEmpty(),
-            recommendationTitle = rec?.recommended_products?.firstOrNull()?.name ?: "",
-            recommendationDesc = rec?.recommended_products?.firstOrNull()?.description.orEmpty(),
-            capturedAt = System.currentTimeMillis()
-        )
-        scanDao.insertScan(entity)
-        return ApiResult.Success(entity)
+            val entity = ScanEntity(
+                cropName = final.crop_type,
+                imageUrl = final.image_url,
+                remoteScanId = final.id,
+                predictionStatus = final.prediction_status,
+                diseaseName = rec?.disease?.name ?: final.disease_name ?: "Pending",
+                confidence = final.confidence_score?.let { "${"%.1f".format(it)}%" } ?: "-",
+                symptoms = rec?.disease?.symptoms.orEmpty(),
+                prevention = rec?.disease?.prevention.orEmpty(),
+                treatment = rec?.disease?.treatment.orEmpty(),
+                recommendationTitle = rec?.recommended_products?.firstOrNull()?.name ?: "",
+                recommendationDesc = rec?.recommended_products?.firstOrNull()?.description.orEmpty(),
+                capturedAt = System.currentTimeMillis()
+            )
+            scanDao.insertScan(entity)
+            ApiResult.Success(entity)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            ApiResult.Error(message = "Scan Lifecycle Error: ${e.message}")
+        }
     }
 
-    private suspend fun pollScan(scanId: String, retries: Int = 10, delayMs: Long = 2000): com.aarcsx.krisho.core.network.dto.ScanDto? {
+    private suspend fun pollScan(scanId: String, retries: Int = 15, delayMs: Long = 3000): com.aarcsx.krisho.core.network.dto.ScanDto? {
         repeat(retries) {
             when (val statusRes = remote.getScan(scanId)) {
                 is ApiResult.Success -> {

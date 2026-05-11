@@ -30,7 +30,7 @@ class LocationProvider @Inject constructor(
         return suspendCancellableCoroutine { continuation ->
             val cts = CancellationTokenSource()
             fusedLocationClient.getCurrentLocation(
-                Priority.PRIORITY_BALANCED_POWER_ACCURACY,
+                Priority.PRIORITY_HIGH_ACCURACY,
                 cts.token
             ).addOnSuccessListener { location: Location? ->
                 continuation.resume(location)

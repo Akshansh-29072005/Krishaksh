@@ -9,10 +9,13 @@ abstract class BaseRemoteDataSource {
         return try {
             val res = api()
             if (res.isSuccessful && res.body() != null) ApiResult.Success(res.body()!!)
-            else ApiResult.Error(res.code(), ApiErrorParser.parse(res))
+            else {
+                val errorMsg = ApiErrorParser.parse(res)
+                ApiResult.Error(res.code(), "API Error ${res.code()}: $errorMsg")
+            }
         } catch (e: Exception) {
             e.printStackTrace()
-            ApiResult.Error(message = e.message ?: "Network error", throwable = e)
+            ApiResult.Error(message = "Network/Parse Error: ${e.message ?: "Unknown"}", throwable = e)
         }
     }
 }

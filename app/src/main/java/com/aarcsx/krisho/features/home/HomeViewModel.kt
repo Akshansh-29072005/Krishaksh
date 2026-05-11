@@ -52,9 +52,12 @@ class HomeViewModel @Inject constructor(
                 flow {
                     try {
                         val location = locationProvider.getCurrentLocation()
-                        val lat = location?.latitude ?: 28.6139
-                        val lon = location?.longitude ?: 77.2090
-                        emit(weatherApiService.getCurrentWeather(lat, lon))
+                        if (location != null) {
+                            emit(weatherApiService.getCurrentWeather(location.latitude, location.longitude))
+                        } else {
+                            // Fallback to Delhi if location is denied
+                            emit(weatherApiService.getCurrentWeather(28.6139, 77.2090))
+                        }
                     } catch (e: Exception) {
                         emit(null)
                     }
@@ -66,7 +69,7 @@ class HomeViewModel @Inject constructor(
 
                 HomeUiState(
                     userName = profile?.name ?: "Farmer",
-                    location = weatherData?.location_name ?: "India",
+                    location = weatherData?.location_name ?: "Detecting...",
                     weather = weatherData?.let {
                         WeatherInfo(
                             temperature = it.temperature,

@@ -28,6 +28,7 @@ fun ProfileScreen(
     onNavigateToHelp: () -> Unit = {},
     onNavigateToPrivacy: () -> Unit = {},
     onNavigateToTerms: () -> Unit = {},
+    onLogoutSuccess: () -> Unit = {},
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -44,7 +45,7 @@ fun ProfileScreen(
                 title = "My Profile",
                 onBackClick = onBackClick,
                 trailingAction = {
-                    TextButton(onClick = { /* Logout Logic */ }) {
+                    TextButton(onClick = { viewModel.logout(onLogoutSuccess) }) {
                         Text(
                             "Logout",
                             color = MaterialTheme.colorScheme.error,
@@ -119,31 +120,10 @@ fun ProfileScreen(
                 ProfileSettingItem("Privacy Policy", onClick = onNavigateToPrivacy)
                 ProfileSettingItem("Terms of Service", onClick = onNavigateToTerms)
 
-                Spacer(modifier = Modifier.height(24.dp))
-
-                Button(
-                    onClick = { viewModel.logout() },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 24.dp)
-                        .height(56.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFFFFEBEE),
-                        contentColor = Color(0xFFD32F2F)
-                    )
-                ) {
-                    Icon(Icons.Default.Logout, contentDescription = null)
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text("Logout", fontWeight = FontWeight.Bold)
-                }
-
-                Spacer(modifier = Modifier.weight(1f))
+                Spacer(modifier = Modifier.height(16.dp))
 
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 24.dp),
+                    modifier = Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
@@ -157,6 +137,22 @@ fun ProfileScreen(
                         fontWeight = FontWeight.Bold,
                         color = ForestGreen
                     )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Button(
+                    onClick = { viewModel.logout(onLogoutSuccess) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp)
+                        .height(56.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Icon(Icons.Default.Logout, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Logout", fontWeight = FontWeight.Bold)
                 }
             }
         }
