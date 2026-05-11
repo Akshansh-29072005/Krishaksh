@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"time"
 )
@@ -47,7 +48,8 @@ func (o *OpenAIProvider) Infer(ctx context.Context, prompt, cropType string, ima
 	}
 	defer res.Body.Close()
 	if res.StatusCode >= 300 {
-		return "", fmt.Errorf("openai status %d", res.StatusCode)
+		body, _ := io.ReadAll(res.Body)
+		return "", fmt.Errorf("openai status %d: %s", res.StatusCode, string(body))
 	}
 	var out struct {
 		Choices []struct {

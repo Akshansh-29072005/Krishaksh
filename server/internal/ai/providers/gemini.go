@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"time"
 )
@@ -25,7 +26,7 @@ func (g *GeminiProvider) Infer(ctx context.Context, prompt, cropType string, ima
 	if g.apiKey == "" {
 		return "", fmt.Errorf("gemini key missing")
 	}
-	url := fmt.Sprintf("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=%s", g.apiKey)
+	url := "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent"
 	payload := map[string]interface{}{
 		"contents": []map[string]interface{}{{
 			"parts": []map[string]interface{}{
@@ -33,18 +34,25 @@ func (g *GeminiProvider) Infer(ctx context.Context, prompt, cropType string, ima
 				{"inline_data": map[string]string{"mime_type": mimeType, "data": base64.StdEncoding.EncodeToString(imageBytes)}},
 			},
 		}},
-		"generationConfig": map[string]interface{}{"temperature": 0.1, "responseMimeType": "application/json"},
 	}
-	b, _ := json.Marshal(payload)
-	req, _ := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(b))
+	b, err := json.Marshal(payload)	
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal payload: %w", err)
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(b))
+	if err != nil {
+		return "", fmt.Errorf("failed to create request: %w", err)
+	}
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("x-goog-api-key", g.apiKey)
 	res, err := g.hc.Do(req)
 	if err != nil {
 		return "", err
 	}
 	defer res.Body.Close()
 	if res.StatusCode >= 300 {
-		return "", fmt.Errorf("gemini status %d", res.StatusCode)
+		body, _ := io.ReadAll(res.Body)
+		return "", fmt.Errorf("gemini status %d: %s", res.StatusCode, string(body))
 	}
 	var out struct {
 		Candidates []struct {

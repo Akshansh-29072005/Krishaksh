@@ -46,6 +46,9 @@ func (s *scanServiceImpl) GetPresignedUploadURL(ctx context.Context, userID uuid
 
 	// URL expires in exactly 15 minutes, ensuring high security parameters
 	url, err := s.s3.GeneratePresignedURL(ctx, s.bucket, key, 15*time.Minute)
+	if err != nil {
+		fmt.Printf("S3 Presign Error: %v\n", err)
+	}
 	return url, key, err
 }
 
@@ -69,7 +72,14 @@ func (s *scanServiceImpl) ProcessUpload(ctx context.Context, userID uuid.UUID, r
 	}
 
 	// 3. Emit asynchronous task to Asynq allowing ultra-low latency response latency
-	err := s.qClient.EnqueueScanTask(scan.ID.String(), scan.ImageURL, scan.CropType)
+	// We generate a presigned GET URL for the worker to bypass private bucket restrictions
+	workerURL, err := s.s3.GeneratePresignedGetURL(ctx, s.bucket, req.ImageKey, 1*time.Hour)
+	if err != nil {
+		fmt.Printf("Warning: Failed to presign worker URL, falling back: %v\n", err)
+		workerURL = imageURL
+	}
+
+	err = s.qClient.EnqueueScanTask(scan.ID.String(), workerURL, scan.CropType)
 	if err != nil {
 		// Log error, but don't fail standard response
 		fmt.Printf("Critical: Failed to enqueue AI task: %v\n", err)

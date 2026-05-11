@@ -15,6 +15,7 @@ import (
 type S3Client interface {
 	UploadImage(ctx context.Context, bucket string, key string, body io.Reader) (string, error)
 	GeneratePresignedURL(ctx context.Context, bucket string, key string, expiration time.Duration) (string, error)
+	GeneratePresignedGetURL(ctx context.Context, bucket string, key string, expiration time.Duration) (string, error)
 }
 
 type s3ClientImpl struct {
@@ -59,6 +60,21 @@ func (s *s3ClientImpl) GeneratePresignedURL(ctx context.Context, bucket string, 
 
 	if err != nil {
 		return "", fmt.Errorf("failed to generate presigned URL: %w", err)
+	}
+
+	return presignedReq.URL, nil
+}
+
+func (s *s3ClientImpl) GeneratePresignedGetURL(ctx context.Context, bucket string, key string, expiration time.Duration) (string, error) {
+	presigner := s3.NewPresignClient(s.client)
+
+	presignedReq, err := presigner.PresignGetObject(ctx, &s3.GetObjectInput{
+		Bucket: aws.String(bucket),
+		Key:    aws.String(key),
+	}, s3.WithPresignExpires(expiration))
+
+	if err != nil {
+		return "", fmt.Errorf("failed to generate presigned GET URL: %w", err)
 	}
 
 	return presignedReq.URL, nil

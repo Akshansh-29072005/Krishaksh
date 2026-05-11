@@ -35,7 +35,16 @@ func (w *ScanWorker) HandleScanAnalyzeTask(ctx context.Context, t *asynq.Task) e
 
 	traceID := ""
 	requestID := ""
-	observability.InitLogger().Info("worker_scan_started", "scan_id", scanID.String(), "crop_type", payload.CropType)
+	urlPreview := payload.ImageURL
+	if len(urlPreview) > 60 {
+		urlPreview = urlPreview[:60] + "..."
+	}
+
+	observability.InitLogger().Info("worker_scan_started", 
+		"scan_id", scanID.String(), 
+		"crop_type", payload.CropType,
+		"image_url_preview", urlPreview,
+	)
 	_ = w.repo.UpdateScanStatus(ctx, scanID, "PROCESSING")
 
 	result, err := w.aiService.Analyze(ctx, payload.ImageURL, payload.CropType, traceID, requestID)
