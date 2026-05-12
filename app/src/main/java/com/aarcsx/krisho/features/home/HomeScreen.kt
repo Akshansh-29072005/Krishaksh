@@ -34,7 +34,14 @@ fun HomeScreen(
     // Launcher for Location and Camera
     val generalPermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
-    ) { _ -> }
+    ) { permissions ->
+        // When user responds to the permission dialog, reload location & weather
+        val locationGranted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
+                permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+        if (locationGranted) {
+            viewModel.reloadLocationWeather()
+        }
+    }
 
     // Request vital permissions on launch
     LaunchedEffect(Unit) {

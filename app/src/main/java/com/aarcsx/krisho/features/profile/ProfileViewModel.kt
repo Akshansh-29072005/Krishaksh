@@ -10,8 +10,12 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+import com.aarcsx.krisho.core.network.api.WeatherApiService
+import com.aarcsx.krisho.core.util.LocationProvider
+
 data class ProfileUiState(
     val profile: UserMeDto? = null,
+    val location: String = "Detecting...",
     val isLoading: Boolean = false,
     val error: String? = null,
     val showLanguageDialog: Boolean = false,
@@ -22,7 +26,9 @@ data class ProfileUiState(
 
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val locationProvider: LocationProvider,
+    private val weatherApiService: WeatherApiService
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ProfileUiState())
@@ -30,9 +36,29 @@ class ProfileViewModel @Inject constructor(
 
     init {
         loadProfile()
+        loadLocation()
         viewModelScope.launch {
             userRepository.languageSetting.collect { lang ->
                 _uiState.update { it.copy(selectedLanguage = if (lang == "hi") "Hindi" else "English") }
+            }
+        }
+    }
+
+    private fun loadLocation() {
+        viewModelScope.launch {
+            try {
+                val location = locationProvider.getCurrentLocation()
+                if (location != null) {
+                    val weatherRes = weatherApiService.getCurrentWeather(location.latitude, location.longitude)
+                    if (weatherRes.isSuccessful) {
+                        val weatherData = weatherRes.body()?.data
+                        _uiState.update { it.copy(location = weatherData?.location_name ?: "Unknown Location") }
+                    }
+                } else {
+                    _uiState.update { it.copy(location = "GPS Disabled") }
+                }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(location = "Location Offline") }
             }
         }
     }

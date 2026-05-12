@@ -95,7 +95,7 @@ fun ProfileScreen(
                                 color = ForestGreen
                             )
                             Text(
-                                "Farmer • ${uiState.profile?.email ?: "Location"}",
+                                "Farmer • ${uiState.location}",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = Color.Gray
                             )

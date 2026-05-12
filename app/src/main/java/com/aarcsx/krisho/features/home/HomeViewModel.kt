@@ -39,78 +39,127 @@ class HomeViewModel @Inject constructor(
 
     fun loadHomeData() {
         viewModelScope.launch {
-            scanRepository.refreshScans()
             _uiState.update { it.copy(isLoading = true, error = null) }
-            combine(
-                userRepository.getProfile().onStart { emit(ApiResult.Loading) },
-                scanRepository.getRecentScans(),
-                flow {
-                    try {
-                        emit(userApiService.featuredAds())
-                    } catch (e: Exception) {
-                        emit(null)
-                    }
-                },
-                flow {
-                    try {
-                        val location = locationProvider.getCurrentLocation()
-                        if (location != null) {
-                            emit(weatherApiService.getCurrentWeather(location.latitude, location.longitude))
-                        } else {
-                            // Fallback to Delhi if location is denied
-                            emit(weatherApiService.getCurrentWeather(28.6139, 77.2090))
-                        }
-                    } catch (e: Exception) {
-                        emit(null)
-                    }
-                }
-            ) { profileRes, scans, adsRes, weatherRes ->
-                val profile = (profileRes as? ApiResult.Success)?.data
-                val ads = adsRes?.body()?.data ?: emptyList()
-                val weatherData = weatherRes?.body()?.data
+            
+            // 1. Refresh scans (background)
+            scanRepository.refreshScans()
 
-                HomeUiState(
-                    userName = profile?.name ?: "Farmer",
-                    location = weatherData?.location_name ?: "Detecting...",
-                    weather = weatherData?.let {
-                        WeatherInfo(
-                            temperature = it.temperature,
-                            condition = it.condition,
-                            humidity = it.humidity,
-                            wind = it.wind_speed
+            // 2. Fetch Profile & Scans
+            launch {
+                combine(
+                    userRepository.getProfile(),
+                    scanRepository.getRecentScans()
+                ) { profileRes, scans ->
+                    val profile = (profileRes as? ApiResult.Success)?.data
+                    _uiState.update { currentState ->
+                        currentState.copy(
+                            userName = profile?.name ?: currentState.userName,
+                            recentScans = scans.take(5).map { entity ->
+                                RecentScan(
+                                    id = entity.id.toString(),
+                                    cropName = entity.cropName,
+                                    status = entity.diseaseName,
+                                    date = "Recently",
+                                    imageUrl = entity.imageUrl
+                                )
+                            },
+                            isLoading = profileRes is ApiResult.Loading
                         )
-                    },
-                    alerts = emptyList(),
-                    recentScans = scans.take(5).map { entity ->
-                        RecentScan(
-                            id = entity.id.toString(),
-                            cropName = entity.cropName,
-                            status = entity.diseaseName,
-                            date = "Recently",
-                            imageUrl = entity.imageUrl
+                    }
+                }.catch { it.printStackTrace() }.collectLatest {}
+            }
+
+            // 3. Fetch Ads
+            launch {
+                try {
+                    val adsRes = userApiService.featuredAds()
+                    val ads = adsRes.body()?.data ?: emptyList()
+                    _uiState.update { currentState ->
+                        currentState.copy(
+                            recommendations = ads.map { ad ->
+                                Recommendation(
+                                    id = ad.id,
+                                    title = ad.title,
+                                    description = "Ad",
+                                    imageUrl = ad.image_url
+                                )
+                            }
                         )
-                    },
-                    recommendations = ads.map { ad ->
-                        Recommendation(
-                            id = ad.id,
-                            title = ad.title,
-                            description = "Ad",
-                            imageUrl = ad.image_url
-                        )
-                    },
-                    isLoading = (profileRes is ApiResult.Loading)
-                )
-            }.catch { e ->
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+
+            // 4. Fetch Location & Weather
+            launch {
+                try {
+                    val location = locationProvider.getCurrentLocation()
+                    if (location != null) {
+                        val weatherRes = weatherApiService.getCurrentWeather(location.latitude, location.longitude)
+                        if (weatherRes.isSuccessful) {
+                            val weatherData = weatherRes.body()?.data
+                            _uiState.update { currentState ->
+                                currentState.copy(
+                                    location = weatherData?.location_name ?: "Unknown Location",
+                                    weather = weatherData?.let {
+                                        WeatherInfo(
+                                            temperature = it.temperature,
+                                            condition = it.condition,
+                                            humidity = it.humidity,
+                                            wind = it.wind_speed
+                                        )
+                                    }
+                                )
+                            }
+                        }
+                    } else {
+                        _uiState.update { it.copy(location = "GPS Disabled") }
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    _uiState.update { it.copy(location = "Location Error") }
+                }
+            }
+        }
+    }
+
+    fun reloadLocationWeather() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(location = "Detecting...") }
+            try {
+                val location = locationProvider.getCurrentLocation()
+                if (location != null) {
+                    val weatherRes = weatherApiService.getCurrentWeather(location.latitude, location.longitude)
+                    if (weatherRes.isSuccessful) {
+                        val weatherData = weatherRes.body()?.data
+                        _uiState.update { currentState ->
+                            currentState.copy(
+                                location = weatherData?.location_name ?: "Unknown Location",
+                                weather = weatherData?.let {
+                                    WeatherInfo(
+                                        temperature = it.temperature,
+                                        condition = it.condition,
+                                        humidity = it.humidity,
+                                        wind = it.wind_speed
+                                    )
+                                }
+                            )
+                        }
+                    } else {
+                        _uiState.update { it.copy(location = "Weather Unavailable") }
+                    }
+                } else {
+                    _uiState.update { it.copy(location = "Location Unavailable") }
+                }
+            } catch (e: Exception) {
                 e.printStackTrace()
-                _uiState.update { it.copy(isLoading = false, error = "Connection Error") }
-            }.collectLatest { state ->
-                _uiState.value = state
+                _uiState.update { it.copy(location = "Location Error") }
             }
         }
     }
 
     override fun onCleared() {
         super.onCleared()
-        // Cancel any pending work if needed
     }
 }

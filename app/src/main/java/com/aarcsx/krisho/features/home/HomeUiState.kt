@@ -35,8 +35,8 @@ data class Recommendation(
 
 @Immutable
 data class HomeUiState(
-    val userName: String = "Ram Singh",
-    val location: String = "Bhiwani, Haryana",
+    val userName: String = "Farmer",
+    val location: String = "Detecting...",
     val weather: WeatherInfo? = null,
     val alerts: List<DiseaseAlert> = emptyList(),
     val recentScans: List<RecentScan> = emptyList(),

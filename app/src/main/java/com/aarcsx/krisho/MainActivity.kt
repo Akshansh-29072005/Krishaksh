@@ -21,11 +21,29 @@ import javax.inject.Inject
 
 import androidx.activity.enableEdgeToEdge
 
+import com.aarcsx.krisho.core.util.PaymentManager
+import com.razorpay.PaymentResultListener
+
 @AndroidEntryPoint
-class MainActivity : ComponentActivity() {
+class MainActivity : ComponentActivity(), PaymentResultListener {
 
     @Inject
     lateinit var preferencesManager: PreferencesManager
+
+    @Inject
+    lateinit var paymentManager: PaymentManager
+
+    override fun onPaymentSuccess(razorpayPaymentId: String?) {
+        lifecycleScope.launch {
+            paymentManager.onPaymentSuccess(razorpayPaymentId)
+        }
+    }
+
+    override fun onPaymentError(code: Int, description: String?) {
+        lifecycleScope.launch {
+            paymentManager.onPaymentError(code, description)
+        }
+    }
 
     override fun attachBaseContext(newBase: Context) {
         // Apply saved language on startup
