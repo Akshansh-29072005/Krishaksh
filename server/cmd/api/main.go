@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -97,16 +99,112 @@ func main() {
 	r := gin.New()
 	r.Use(middleware.RecoveryJSON(), middleware.RequestContext(), middleware.RequestTiming(), middleware.ErrorTracker(), middleware.ValidationGuard(), middleware.UploadSizeLimit(10<<20), middleware.RateLimit(240), middleware.AbusePrevention())
 
-	r.GET("/weather", func(c *gin.Context) {
-		// Mock weather implementation for rebrand delivery
+	r.GET("/api/v1/weather", func(c *gin.Context) {
+		lat := c.Query("lat")
+		lon := c.Query("lon")
+		if lat == "" || lon == "" {
+			c.JSON(400, gin.H{"status": "error", "message": "lat and lon are required"})
+			return
+		}
+
+		// 1. Get real weather from Open-Meteo (free, no API key)
+		weatherURL := fmt.Sprintf(
+			"https://api.open-meteo.com/v1/forecast?latitude=%s&longitude=%s&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&timezone=auto",
+			lat, lon,
+		)
+		weatherResp, err := http.Get(weatherURL)
+		if err != nil {
+			c.JSON(200, gin.H{"status": "success", "data": gin.H{
+				"temperature": "--°C", "condition": "Unknown", "humidity": "--%",
+				"wind_speed": "-- km/h", "location_name": "Unknown Location",
+			}})
+			return
+		}
+		defer weatherResp.Body.Close()
+
+		var weatherData struct {
+			Current struct {
+				Temperature  float64 `json:"temperature_2m"`
+				Humidity     float64 `json:"relative_humidity_2m"`
+				WeatherCode  int     `json:"weather_code"`
+				WindSpeed    float64 `json:"wind_speed_10m"`
+			} `json:"current"`
+		}
+		if err := json.NewDecoder(weatherResp.Body).Decode(&weatherData); err != nil {
+			c.JSON(200, gin.H{"status": "success", "data": gin.H{
+				"temperature": "--°C", "condition": "Unknown", "humidity": "--%",
+				"wind_speed": "-- km/h", "location_name": "Unknown Location",
+			}})
+			return
+		}
+
+		// 2. Get location name from Open-Meteo geocoding (reverse)
+		geoURL := fmt.Sprintf(
+			"https://nominatim.openstreetmap.org/reverse?lat=%s&lon=%s&format=json&accept-language=en",
+			lat, lon,
+		)
+		req, _ := http.NewRequest("GET", geoURL, nil)
+		req.Header.Set("User-Agent", "Krisho-App/1.0")
+		geoResp, err := http.DefaultClient.Do(req)
+		locationName := "Your Location"
+		if err == nil {
+			defer geoResp.Body.Close()
+			var geoData struct {
+				Address struct {
+					City        string `json:"city"`
+					Town        string `json:"town"`
+					Village     string `json:"village"`
+					County      string `json:"county"`
+					State       string `json:"state"`
+					Country     string `json:"country"`
+				} `json:"address"`
+			}
+			if err := json.NewDecoder(geoResp.Body).Decode(&geoData); err == nil {
+				place := geoData.Address.City
+				if place == "" { place = geoData.Address.Town }
+				if place == "" { place = geoData.Address.Village }
+				if place == "" { place = geoData.Address.County }
+				region := geoData.Address.State
+				if place != "" && region != "" {
+					locationName = place + ", " + region
+				} else if place != "" {
+					locationName = place
+				} else if region != "" {
+					locationName = region
+				}
+			}
+		}
+
+		// 3. Map WMO weather code to condition string
+		condition := "Clear"
+		wc := weatherData.Current.WeatherCode
+		switch {
+		case wc == 0:
+			condition = "Clear"
+		case wc <= 3:
+			condition = "Cloudy"
+		case wc >= 45 && wc <= 48:
+			condition = "Foggy"
+		case wc >= 51 && wc <= 57:
+			condition = "Drizzle"
+		case wc >= 61 && wc <= 67:
+			condition = "Rain"
+		case wc >= 71 && wc <= 77:
+			condition = "Snow"
+		case wc >= 80 && wc <= 82:
+			condition = "Showers"
+		case wc >= 95:
+			condition = "Thunderstorm"
+		}
+
 		c.JSON(200, gin.H{
 			"status": "success",
 			"data": gin.H{
-				"temperature":   "28°C",
-				"condition":     "Sunny",
-				"humidity":      "40%",
-				"wind_speed":    "12 km/h",
-				"location_name": "New Delhi, India",
+				"temperature":   fmt.Sprintf("%.0f°C", weatherData.Current.Temperature),
+				"condition":     condition,
+				"humidity":      fmt.Sprintf("%.0f%%", weatherData.Current.Humidity),
+				"wind_speed":    fmt.Sprintf("%.0f km/h", weatherData.Current.WindSpeed),
+				"location_name": locationName,
 			},
 		})
 	})
