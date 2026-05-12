@@ -35,6 +35,7 @@ android {
         debug {
             signingConfig = signingConfigs.getByName("release")
             buildConfigField("String", "BASE_URL", "\"http://192.168.31.102/api/v1/\"")
+            buildConfigField("String", "RAZORPAY_KEY_ID", "\"rzp_test_SngDkzeaoqQi4o\"")
             manifestPlaceholders["appLabel"] = "Krisho Dev"
         }
         create("staging") {
@@ -42,6 +43,7 @@ android {
             applicationIdSuffix = ".staging"
             matchingFallbacks.add("release")
             buildConfigField("String", "BASE_URL", "\"https://api.staging.krisho.aarcsx.com/v1/\"")
+            buildConfigField("String", "RAZORPAY_KEY_ID", "\"rzp_test_SngDkzeaoqQi4o\"")
             manifestPlaceholders["appLabel"] = "Krisho Staging"
         }
         release {
@@ -49,6 +51,7 @@ android {
             isShrinkResources = true
             signingConfig = signingConfigs.getByName("release")
             buildConfigField("String", "BASE_URL", "\"https://api.krisho.aarcsx.com/v1/\"")
+            buildConfigField("String", "RAZORPAY_KEY_ID", "\"rzp_test_SngDkzeaoqQi4o\"")
             manifestPlaceholders["appLabel"] = "Krisho"
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
