@@ -28,4 +28,5 @@ class ScanRemoteDataSource @Inject constructor(
     suspend fun createScan(cropType: String, imageKey: String): ApiResult<ApiEnvelope<ScanDto>> = call { api.createScan(CreateScanRequestDto(cropType, imageKey)) }
     suspend fun getScan(scanId: String): ApiResult<ApiEnvelope<ScanDto>> = call { api.getScan(scanId) }
     suspend fun getRecommendations(scanId: String): ApiResult<ApiEnvelope<RecommendationDto>> = call { api.getRecommendations(scanId) }
+    suspend fun getScanHistory(): ApiResult<ApiEnvelope<List<ScanDto>>> = call { api.getScanHistory() }
 }

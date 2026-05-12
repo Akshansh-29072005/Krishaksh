@@ -39,6 +39,8 @@ class HomeViewModel @Inject constructor(
 
     fun loadHomeData() {
         viewModelScope.launch {
+            scanRepository.refreshScans()
+            _uiState.update { it.copy(isLoading = true, error = null) }
             combine(
                 userRepository.getProfile().onStart { emit(ApiResult.Loading) },
                 scanRepository.getRecentScans(),

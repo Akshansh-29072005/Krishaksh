@@ -17,6 +17,32 @@ class ScanRepository @Inject constructor(
 ) {
     fun getRecentScans(): Flow<List<ScanEntity>> = scanDao.getAllScans()
 
+    suspend fun refreshScans() {
+        when (val res = remote.getScanHistory()) {
+            is ApiResult.Success -> {
+                val scans = res.data.data ?: return
+                val entities = scans.map { dto ->
+                    ScanEntity(
+                        cropName = dto.crop_type,
+                        imageUrl = dto.image_url,
+                        remoteScanId = dto.id,
+                        predictionStatus = dto.prediction_status,
+                        diseaseName = dto.disease_name ?: "Pending",
+                        confidence = dto.confidence_score?.let { "${"%.1f".format(it * 100)}%" } ?: "-",
+                        symptoms = dto.ai_symptoms?.joinToString("\n• ") ?: "",
+                        prevention = "",
+                        treatment = "",
+                        recommendationTitle = "",
+                        recommendationDesc = "",
+                        capturedAt = System.currentTimeMillis() // Or parse from DTO
+                    )
+                }
+                scanDao.insertScans(entities)
+            }
+            else -> Unit
+        }
+    }
+
     suspend fun runScanLifecycle(cropName: String, imageBytes: ByteArray, contentType: String = "image/jpeg"): ApiResult<ScanEntity> {
         return try {
             val uploadRes = remote.getPresignedUrl(contentType)

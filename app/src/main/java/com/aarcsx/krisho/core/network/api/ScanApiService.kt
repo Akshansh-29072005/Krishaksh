@@ -18,6 +18,9 @@ interface ScanApiService {
     @GET("recommendations/{scanId}")
     suspend fun getRecommendations(@Path("scanId") scanId: String): Response<ApiEnvelope<RecommendationDto>>
 
+    @GET("scans/history")
+    suspend fun getScanHistory(): Response<ApiEnvelope<List<ScanDto>>>
+
     @PUT
     suspend fun uploadToS3(
         @Url uploadUrl: String,
