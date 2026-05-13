@@ -50,7 +50,7 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             signingConfig = signingConfigs.getByName("release")
-            buildConfigField("String", "BASE_URL", "\"https://api.krisho.aarcsx.com/v1/\"")
+            buildConfigField("String", "BASE_URL", "\"https://api-krisho.aarcsx.com/api/v1/\"")
             buildConfigField("String", "RAZORPAY_KEY_ID", "\"rzp_test_SngDkzeaoqQi4o\"")
             manifestPlaceholders["appLabel"] = "Krisho"
             proguardFiles(
