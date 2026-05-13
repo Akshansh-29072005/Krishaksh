@@ -51,6 +51,11 @@ func ConnectDB(cfg *config.Config) (*DB, error) {
 	poolConfig.MaxConnLifetime = maxLifetime
 	poolConfig.MaxConnIdleTime = maxIdleTime
 
+	// Set query timeout to prevent long-running queries
+	poolConfig.ConnConfig.RuntimeParams = map[string]string{
+		"statement_timeout": "30000", // 30 seconds
+	}
+
 	// Retry logic for production-safe startup
 	var pool *pgxpool.Pool
 	for i := 0; i < 5; i++ {

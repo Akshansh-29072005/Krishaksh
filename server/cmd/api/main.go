@@ -32,6 +32,10 @@ import (
 	analyticsRepo "github.com/aarcsx/krisho-backend/internal/modules/analytics/repository"
 	analyticsRoutes "github.com/aarcsx/krisho-backend/internal/modules/analytics/routes"
 	analyticsService "github.com/aarcsx/krisho-backend/internal/modules/analytics/service"
+	appHandler "github.com/aarcsx/krisho-backend/internal/modules/app/handler"
+	appRepo "github.com/aarcsx/krisho-backend/internal/modules/app/repository"
+	appRoutes "github.com/aarcsx/krisho-backend/internal/modules/app/routes"
+	appService "github.com/aarcsx/krisho-backend/internal/modules/app/service"
 	authHandler "github.com/aarcsx/krisho-backend/internal/modules/auth/handler"
 	authRepo "github.com/aarcsx/krisho-backend/internal/modules/auth/repository"
 	authRoutes "github.com/aarcsx/krisho-backend/internal/modules/auth/routes"
@@ -67,8 +71,8 @@ import (
 	scanService "github.com/aarcsx/krisho-backend/internal/modules/scans/service"
 	userHandler "github.com/aarcsx/krisho-backend/internal/modules/users/handler"
 	userRoutes "github.com/aarcsx/krisho-backend/internal/modules/users/routes"
-	"github.com/aarcsx/krisho-backend/internal/workers"
-	"github.com/aarcsx/krisho-backend/pkg/queue"
+	workers "github.com/aarcsx/krisho-backend/internal/workers"
+	queue "github.com/aarcsx/krisho-backend/pkg/queue"
 	"github.com/aarcsx/krisho-backend/pkg/s3"
 )
 
@@ -97,7 +101,7 @@ func main() {
 	defer qClient.Close()
 
 	r := gin.New()
-	r.Use(middleware.RecoveryJSON(), middleware.RequestContext(), middleware.RequestTiming(), middleware.ErrorTracker(), middleware.ValidationGuard(), middleware.UploadSizeLimit(10<<20), middleware.RateLimit(240), middleware.AbusePrevention())
+	r.Use(middleware.RecoveryJSON(), middleware.CORS(), middleware.RequestResponseLogger(), middleware.RequestContext(), middleware.RequestTiming(), middleware.ErrorTracker(), middleware.ValidationGuard(), middleware.UploadSizeLimit(10<<20), middleware.RateLimit(240), middleware.AbusePrevention())
 
 	r.GET("/api/v1/weather", func(c *gin.Context) {
 		lat := c.Query("lat")
@@ -124,10 +128,10 @@ func main() {
 
 		var weatherData struct {
 			Current struct {
-				Temperature  float64 `json:"temperature_2m"`
-				Humidity     float64 `json:"relative_humidity_2m"`
-				WeatherCode  int     `json:"weather_code"`
-				WindSpeed    float64 `json:"wind_speed_10m"`
+				Temperature float64 `json:"temperature_2m"`
+				Humidity    float64 `json:"relative_humidity_2m"`
+				WeatherCode int     `json:"weather_code"`
+				WindSpeed   float64 `json:"wind_speed_10m"`
 			} `json:"current"`
 		}
 		if err := json.NewDecoder(weatherResp.Body).Decode(&weatherData); err != nil {
@@ -151,19 +155,25 @@ func main() {
 			defer geoResp.Body.Close()
 			var geoData struct {
 				Address struct {
-					City        string `json:"city"`
-					Town        string `json:"town"`
-					Village     string `json:"village"`
-					County      string `json:"county"`
-					State       string `json:"state"`
-					Country     string `json:"country"`
+					City    string `json:"city"`
+					Town    string `json:"town"`
+					Village string `json:"village"`
+					County  string `json:"county"`
+					State   string `json:"state"`
+					Country string `json:"country"`
 				} `json:"address"`
 			}
 			if err := json.NewDecoder(geoResp.Body).Decode(&geoData); err == nil {
 				place := geoData.Address.City
-				if place == "" { place = geoData.Address.Town }
-				if place == "" { place = geoData.Address.Village }
-				if place == "" { place = geoData.Address.County }
+				if place == "" {
+					place = geoData.Address.Town
+				}
+				if place == "" {
+					place = geoData.Address.Village
+				}
+				if place == "" {
+					place = geoData.Address.County
+				}
 				region := geoData.Address.State
 				if place != "" && region != "" {
 					locationName = place + ", " + region
@@ -212,7 +222,7 @@ func main() {
 	authRepository := authRepo.NewAuthRepository(db)
 	authSvc := authService.NewAuthService(authRepository)
 	authHdlr := authHandler.NewAuthHandler(authSvc)
-	userHdlr := userHandler.NewUserHandler()
+	userHdlr := userHandler.NewUserHandler(authRepository)
 
 	s3Client, _ := s3.NewS3Client("ap-south-1", os.Getenv("AWS_ACCESS_KEY"), os.Getenv("AWS_SECRET_KEY"))
 	s3Bucket := os.Getenv("S3_BUCKET")
@@ -227,10 +237,13 @@ func main() {
 	diseaseHdlr := diseaseHandler.NewDiseaseHandler(diseaseRepository)
 	productRepository := productRepo.NewProductRepository(db)
 	productHdlr := productHandler.NewProductHandler(productRepository)
-	recSvc := recService.NewRecommendationService(scanRepository, diseaseRepository, productRepository)
-	recHdlr := recHandler.NewRecommendationHandler(recSvc)
 	adRepository := adRepo.NewAdvertisementRepository(db)
 	adHdlr := adHandler.NewAdvertisementHandler(adRepository)
+	recSvc := recService.NewRecommendationService(scanRepository, diseaseRepository, productRepository)
+	recHdlr := recHandler.NewRecommendationHandler(recSvc)
+	appRepository := appRepo.NewAppRepository(db)
+	appSvc := appService.NewAppService(appRepository)
+	appHdlr := appHandler.NewAppHandler(appSvc)
 
 	cartRepository := cartRepo.NewCartRepository(db)
 	cartSvc := cartService.NewCartService(cartRepository, productRepository)
@@ -301,6 +314,7 @@ func main() {
 	{
 		authRoutes.RegisterAuthRoutes(v1, authHdlr)
 		userRoutes.RegisterUserRoutes(v1, userHdlr)
+		appRoutes.RegisterAppRoutes(v1, appHdlr)
 		scanRoutes.RegisterScanRoutes(v1, scanHdlr)
 		diseaseRoutes.RegisterDiseaseRoutes(v1, diseaseHdlr)
 		productRoutes.RegisterProductRoutes(v1, productHdlr)

@@ -51,19 +51,23 @@ func (s *authServiceImpl) LoginWithGoogle(ctx context.Context, req dto.GoogleLog
 		}
 
 		user = &models.User{
-			ID:        uuid.New(),
-			GoogleID:  &googleID,
-			FullName:  name,
-			Email:     &email,
-			RoleID:    role.ID,
-			Language:  "en",
-			CreatedAt: time.Now(),
-			UpdatedAt: time.Now(),
+			ID:          uuid.New(),
+			GoogleID:    &googleID,
+			FullName:    name,
+			Email:       &email,
+			DeviceToken: &req.DeviceToken,
+			RoleID:      role.ID,
+			Language:    "en",
+			CreatedAt:   time.Now(),
+			UpdatedAt:   time.Now(),
 		}
 
 		if err := s.repo.CreateUser(ctx, user); err != nil {
 			return nil, fmt.Errorf("failed to create user: %w", err)
 		}
+	} else if req.DeviceToken != "" {
+		// Update device token if user already exists
+		s.repo.UpdateDeviceToken(ctx, user.ID, req.DeviceToken)
 	}
 
 	roleName := "FARMER" // Ideally we grab this via a JOIN query on login
@@ -136,5 +140,17 @@ func (s *authServiceImpl) RefreshSession(ctx context.Context, req dto.TokenRefre
 }
 
 func (s *authServiceImpl) Logout(ctx context.Context, refreshToken string) error {
-	return s.repo.RevokeRefreshToken(ctx, refreshToken)
+	// Revoke the refresh token
+	if err := s.repo.RevokeRefreshToken(ctx, refreshToken); err != nil {
+		return err
+	}
+
+	// Find the user ID from the token
+	rt, err := s.repo.FindRefreshToken(ctx, refreshToken)
+	if err == nil {
+		// Clear the device token for this user on logout
+		return s.repo.UpdateDeviceToken(ctx, rt.UserID, "")
+	}
+
+	return nil
 }

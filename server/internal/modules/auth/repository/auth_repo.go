@@ -5,15 +5,18 @@ import (
 
 	"github.com/aarcsx/krisho-backend/internal/database"
 	"github.com/aarcsx/krisho-backend/internal/models"
+	"github.com/google/uuid"
 )
 
 type AuthRepository interface {
 	FindUserByGoogleID(ctx context.Context, googleID string) (*models.User, error)
+	GetUserByID(ctx context.Context, userID uuid.UUID) (*models.User, error)
 	CreateUser(ctx context.Context, user *models.User) error
 	GetRoleByName(ctx context.Context, name string) (*models.Role, error)
 	StoreRefreshToken(ctx context.Context, token *models.RefreshToken) error
 	RevokeRefreshToken(ctx context.Context, tokenStr string) error
 	FindRefreshToken(ctx context.Context, tokenStr string) (*models.RefreshToken, error)
+	UpdateDeviceToken(ctx context.Context, userID uuid.UUID, deviceToken string) error
 }
 
 type authRepoImpl struct {
@@ -41,14 +44,37 @@ func (r *authRepoImpl) FindUserByGoogleID(ctx context.Context, googleID string) 
 	return user, nil
 }
 
+func (r *authRepoImpl) GetUserByID(ctx context.Context, userID uuid.UUID) (*models.User, error) {
+	query := `SELECT id, google_id, full_name, email, phone_number, device_token, role_id, village, language, created_at, updated_at 
+	          FROM users WHERE id = $1 LIMIT 1`
+
+	user := &models.User{}
+	err := r.db.Pool.QueryRow(ctx, query, userID).Scan(
+		&user.ID, &user.GoogleID, &user.FullName, &user.Email,
+		&user.PhoneNumber, &user.DeviceToken, &user.RoleID,
+		&user.Village, &user.Language, &user.CreatedAt, &user.UpdatedAt,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
+}
+
 func (r *authRepoImpl) CreateUser(ctx context.Context, user *models.User) error {
-	query := `INSERT INTO users (id, google_id, full_name, email, language, role_id, created_at, updated_at) 
-	          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`
+	query := `INSERT INTO users (id, google_id, full_name, email, language, role_id, device_token, created_at, updated_at) 
+	          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
 
 	_, err := r.db.Pool.Exec(ctx, query,
 		user.ID, user.GoogleID, user.FullName, user.Email, user.Language,
-		user.RoleID, user.CreatedAt, user.UpdatedAt,
+		user.RoleID, user.DeviceToken, user.CreatedAt, user.UpdatedAt,
 	)
+	return err
+}
+
+func (r *authRepoImpl) UpdateDeviceToken(ctx context.Context, userID uuid.UUID, deviceToken string) error {
+	query := `UPDATE users SET device_token = $1, updated_at = NOW() WHERE id = $2`
+	_, err := r.db.Pool.Exec(ctx, query, deviceToken, userID)
 	return err
 }
 

@@ -2,7 +2,8 @@ package dto
 
 // GoogleLoginRequest receives the OAuth ID Token from Android
 type GoogleLoginRequest struct {
-	IDToken string `json:"id_token" binding:"required"`
+	IDToken     string `json:"id_token" binding:"required"`
+	DeviceToken string `json:"device_token"`
 }
 
 // TokenRefreshRequest rotates the expired Access Token
