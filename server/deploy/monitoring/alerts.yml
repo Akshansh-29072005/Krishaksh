@@ -1,0 +1,73 @@
+groups:
+  - name: krisho_alerts
+    interval: 30s
+    rules:
+      # Alert if API is down (health check failing)
+      - alert: APIDown
+        expr: up{job="api"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Krisho API is down"
+          description: "The API endpoint at {{ $labels.instance }} has been down for more than 1 minute"
+
+      # Alert if Redis memory is critical (>90%)
+      - alert: RedisMemoryCritical
+        expr: redis_memory_used_bytes / redis_memory_max_bytes > 0.9
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Redis memory usage critical"
+          description: "Redis memory usage is above 90% (current: {{ $value | humanizePercentage }})"
+
+      # Alert if DB connection pool is exhausted
+      - alert: DBConnectionPoolExhausted
+        expr: pg_stat_activity_count >= 40
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Database connection pool nearly exhausted"
+          description: "Active DB connections: {{ $value }}/50. Connection pool may be exhausted soon."
+
+      # Alert if API error rate is high (>5% 5xx errors)
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High error rate detected"
+          description: "API error rate is {{ $value | humanizePercentage }} over the last 5 minutes"
+
+      # Alert if request latency is too high (p95 > 1s)
+      - alert: HighLatency
+        expr: histogram_quantile(0.95, rate(http_request_duration_ms_total[5m])) > 1000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "API latency is high"
+          description: "95th percentile request latency: {{ $value }}ms"
+
+      # Alert if Asynq queue is backing up
+      - alert: AsynqQueueBacklog
+        expr: asynq_queue_size > 1000
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Asynq task queue is backing up"
+          description: "Task queue size: {{ $value }} tasks. Worker may be slow."
+
+      # Alert if Nginx is down
+      - alert: NginxDown
+        expr: up{job="nginx"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Nginx reverse proxy is down"
+          description: "Nginx has been down for more than 1 minute. API traffic cannot reach clients."
