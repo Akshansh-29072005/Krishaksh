@@ -27,9 +27,18 @@ fun CropSelectionScreen(
     viewModel: ScanViewModel = androidx.hilt.navigation.compose.hiltViewModel()
 ) {
     val userCrops by viewModel.userCrops.collectAsState()
-    var selectedCrop by remember { mutableStateOf("") }
-    val defaultCrops = remember { listOf("Rice", "Brinjal", "Maize", "Tomato", "Potato", "Wheat") }
-    val crops = userCrops?.ifEmpty { defaultCrops } ?: defaultCrops
+    var selectedCrop by remember { mutableStateOf<CropItem?>(null) }
+    val defaultCrops = remember {
+        listOf(
+            CropItem("Rice", "🌾"),
+            CropItem("Brinjal", "🍆"),
+            CropItem("Maize", "🌽"),
+            CropItem("Tomato", "🍅"),
+            CropItem("Potato", "🥔"),
+            CropItem("Wheat", "🌾")
+        )
+    }
+    val crops = if (userCrops.isEmpty()) defaultCrops else userCrops
 
     Scaffold(
         containerColor = Color(0xFFF5F7F2)
@@ -72,16 +81,17 @@ fun CropSelectionScreen(
                 ) {
                     items(crops) { crop ->
                         CropCard(
-                            name = crop,
-                            isSelected = selectedCrop == crop,
+                            name = crop.name,
+                            emoji = crop.emoji,
+                            isSelected = selectedCrop?.name == crop.name,
                             onClick = { selectedCrop = crop }
                         )
                     }
                 }
 
                 Button(
-                    onClick = { onCropSelected(selectedCrop) },
-                    enabled = selectedCrop.isNotEmpty(),
+                    onClick = { selectedCrop?.let { onCropSelected(it.name) } },
+                    enabled = selectedCrop != null,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 24.dp)
@@ -99,19 +109,10 @@ fun CropSelectionScreen(
 @Composable
 fun CropCard(
     name: String,
+    emoji: String,
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
-    val emoji = when (name) {
-        "Rice" -> "🌾"
-        "Brinjal" -> "🍆"
-        "Maize" -> "🌽"
-        "Tomato" -> "🍅"
-        "Potato" -> "🥔"
-        "Wheat" -> "🌾"
-        else -> "🌿"
-    }
-
     Card(
         modifier = Modifier
             .fillMaxWidth()

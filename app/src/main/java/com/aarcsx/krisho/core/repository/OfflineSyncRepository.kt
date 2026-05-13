@@ -12,6 +12,8 @@ class OfflineSyncRepository @Inject constructor(
 ) {
     fun getPendingTasks(): Flow<List<OfflineSyncEntity>> = offlineSyncDao.getAllPending()
 
+    suspend fun getPendingTasksOnce(): List<OfflineSyncEntity> = offlineSyncDao.getAllPendingOnce()
+
     suspend fun enqueue(type: String, payload: String) {
         offlineSyncDao.enqueue(OfflineSyncEntity(type = type, payload = payload))
     }

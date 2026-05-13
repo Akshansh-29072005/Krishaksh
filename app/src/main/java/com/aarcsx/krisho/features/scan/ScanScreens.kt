@@ -188,6 +188,20 @@ fun ScanScreen(
                 }
             }
 
+            uiState.infoMessage?.let { message ->
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 32.dp)
+                        .padding(bottom = 120.dp)
+                        .background(Color.Black.copy(alpha = 0.72f), RoundedCornerShape(8.dp))
+                        .padding(12.dp)
+                        .align(Alignment.BottomCenter)
+                ) {
+                    Text(message, color = Color.White, style = MaterialTheme.typography.bodySmall)
+                }
+            }
+
             // Confirmation Buttons
             Row(
                 modifier = Modifier

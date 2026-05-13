@@ -88,8 +88,9 @@ fun ProfileScreen(
                         }
                         Spacer(modifier = Modifier.width(16.dp))
                         Column {
+                            val displayName = uiState.profile?.name ?: uiState.profile?.email ?: "Loading..."
                             Text(
-                                uiState.profile?.name ?: "Loading...",
+                                displayName,
                                 style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.Bold,
                                 color = ForestGreen
@@ -120,39 +121,28 @@ fun ProfileScreen(
                 ProfileSettingItem("Privacy Policy", onClick = onNavigateToPrivacy)
                 ProfileSettingItem("Terms of Service", onClick = onNavigateToTerms)
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(24.dp))
 
                 Column(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text(
-                        text = "App Version",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = Color.Gray
-                    )
-                    Text(
-                        text = "1.0.2",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = ForestGreen
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Button(
-                    onClick = { viewModel.logout(onLogoutSuccess) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 24.dp)
-                        .height(56.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
-                ) {
-                    Icon(Icons.Default.Logout, contentDescription = null)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Logout", fontWeight = FontWeight.Bold)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Text(
+                            text = "App Version",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = Color.Gray
+                        )
+                        Text(
+                            text = "1.0.2",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = ForestGreen
+                        )
+                    }
                 }
             }
         }

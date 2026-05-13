@@ -4,28 +4,19 @@ import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.ui.Modifier
+import androidx.activity.enableEdgeToEdge
 import androidx.lifecycle.lifecycleScope
 import com.aarcsx.krisho.core.common.LocaleManager
 import com.aarcsx.krisho.core.designsystem.theme.KrishoTheme
 import com.aarcsx.krisho.core.local.datastore.PreferencesManager
-import com.aarcsx.krisho.navigation.KrishoNavGraph
-import com.aarcsx.krisho.navigation.Screen
+import com.aarcsx.krisho.core.util.PaymentManager
+import com.aarcsx.krisho.features.startup.AppStartupScreen
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-import androidx.activity.enableEdgeToEdge
-
-import com.aarcsx.krisho.core.util.PaymentManager
-import com.razorpay.PaymentResultListener
-
 @AndroidEntryPoint
-class MainActivity : ComponentActivity(), PaymentResultListener {
+class MainActivity : ComponentActivity(), com.razorpay.PaymentResultListener {
 
     @Inject
     lateinit var preferencesManager: PreferencesManager
@@ -53,21 +44,10 @@ class MainActivity : ComponentActivity(), PaymentResultListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-        
-        lifecycleScope.launch {
-            preferencesManager.jwtToken.collect { token ->
-                val startDestination = if (token.isNullOrBlank()) Screen.Auth.route else Screen.Home.route
-                
-                setContent {
-                    KrishoTheme {
-                        Surface(
-                            modifier = Modifier.fillMaxSize(),
-                            color = MaterialTheme.colorScheme.background
-                        ) {
-                            KrishoNavGraph(startDestination = startDestination)
-                        }
-                    }
-                }
+
+        setContent {
+            KrishoTheme {
+                AppStartupScreen()
             }
         }
     }

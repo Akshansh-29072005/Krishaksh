@@ -25,4 +25,10 @@ object AppUtilsModule {
     fun provideGoogleSignInManager(@ApplicationContext context: Context): GoogleSignInManager {
         return GoogleSignInManager(context)
     }
+
+    @Provides
+    @Singleton
+    fun provideNetworkMonitor(@ApplicationContext context: Context): com.aarcsx.krisho.core.util.NetworkMonitor {
+        return com.aarcsx.krisho.core.util.NetworkMonitor(context)
+    }
 }

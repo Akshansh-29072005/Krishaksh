@@ -20,7 +20,8 @@ class AuthRepository @Inject constructor(
     suspend fun setLanguage(langCode: String) = preferencesManager.saveLanguage(langCode)
 
     suspend fun loginWithGoogle(idToken: String): ApiResult<Unit> {
-        return when (val result = remote.googleLogin(idToken)) {
+        val fcmToken = preferencesManager.fcmToken.first()
+        return when (val result = remote.googleLogin(idToken, fcmToken)) {
             is ApiResult.Success -> {
                 val tokens = result.data.data ?: return ApiResult.Error(message = "Invalid auth response")
                 preferencesManager.saveTokens(tokens.access_token, tokens.refresh_token)

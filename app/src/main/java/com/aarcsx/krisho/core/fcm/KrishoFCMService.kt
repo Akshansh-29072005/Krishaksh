@@ -31,9 +31,8 @@ class KrishoFCMService : FirebaseMessagingService() {
     override fun onNewToken(token: String) {
         super.onNewToken(token)
         Timber.d("New FCM Token: $token")
-        // In production, we'd send this to the backend
         serviceScope.launch {
-            // preferencesManager.saveFcmToken(token)
+            preferencesManager.saveFcmToken(token)
         }
     }
 

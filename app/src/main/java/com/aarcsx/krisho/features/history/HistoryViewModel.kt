@@ -6,6 +6,7 @@ import com.aarcsx.krisho.core.local.room.entity.ScanEntity
 import com.aarcsx.krisho.core.repository.ScanRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class HistoryUiState(
@@ -22,7 +23,14 @@ class HistoryViewModel @Inject constructor(
     val uiState: StateFlow<HistoryUiState> = _uiState.asStateFlow()
 
     init {
+        refreshHistory()
         loadScans()
+    }
+
+    private fun refreshHistory() {
+        viewModelScope.launch {
+            scanRepository.refreshScans()
+        }
     }
 
     private fun loadScans() {
