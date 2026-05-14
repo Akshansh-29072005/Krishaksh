@@ -59,6 +59,33 @@ CREATE TABLE support_tickets (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     title VARCHAR(200) NOT NULL,
-    message TEXT NOT NULL,
-    status VARCHAR(20) NOT NULL DEFAULT 'OPEN'
+    description TEXT NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'open',
+    priority VARCHAR(20) DEFAULT 'medium',
+    assigned_to UUID REFERENCES users(id),
+    callback_requested BOOLEAN DEFAULT FALSE,
+    callback_status VARCHAR(20) DEFAULT 'none',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    resolved_at TIMESTAMPTZ
+);
+
+CREATE TABLE support_messages (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    ticket_id UUID NOT NULL REFERENCES support_tickets(id) ON DELETE CASCADE,
+    sender_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    sender_role VARCHAR(20) NOT NULL,
+    body TEXT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE support_attachments (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    ticket_id UUID NOT NULL REFERENCES support_tickets(id) ON DELETE CASCADE,
+    message_id UUID REFERENCES support_messages(id) ON DELETE SET NULL,
+    uploader_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    file_url TEXT NOT NULL,
+    file_type VARCHAR(20) NOT NULL,
+    file_size_bytes BIGINT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
