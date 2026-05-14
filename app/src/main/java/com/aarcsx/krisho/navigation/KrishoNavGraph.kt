@@ -231,6 +231,8 @@ fun MainScaffold(
             }
         }
     ) { innerPadding ->
-        content(innerPadding)
+        Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
+            content(innerPadding)
+        }
     }
 }

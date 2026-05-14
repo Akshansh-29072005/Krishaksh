@@ -85,18 +85,27 @@ class ProfileViewModel @Inject constructor(
     }
 
     fun updatePhoneInput(phone: String) {
-        _uiState.update { it.copy(phoneInput = phone) }
+        val digitsOnly = phone.filter { it.isDigit() }.take(10)
+        _uiState.update { it.copy(phoneInput = digitsOnly) }
     }
 
     fun updatePhone(phone: String) {
+        val sanitized = phone.filter { it.isDigit() }
+        if (sanitized.length != 10) {
+            _uiState.update { it.copy(isUpdating = false, error = "Please enter a valid 10-digit phone number") }
+            return
+        }
+
         viewModelScope.launch {
             _uiState.update { it.copy(isUpdating = true, error = null) }
-            when (val result = userRepository.updatePhone(phone)) {
+            when (val result = userRepository.updatePhone(sanitized)) {
                 is ApiResult.Success -> _uiState.update { it.copy(profile = result.data, phoneInput = result.data.phone ?: "", isUpdating = false, error = null) }
                 is ApiResult.Error -> _uiState.update { it.copy(isUpdating = false, error = result.message) }
                 else -> _uiState.update { it.copy(isUpdating = false, error = "Unable to update phone number") }
             }
-            togglePhoneDialog(false)
+            if (_uiState.value.error == null) {
+                togglePhoneDialog(false)
+            }
         }
     }
 

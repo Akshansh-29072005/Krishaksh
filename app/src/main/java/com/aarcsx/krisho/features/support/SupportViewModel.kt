@@ -179,6 +179,7 @@ class SupportViewModel @Inject constructor(
 
     fun requestCallback(ticketId: String) {
         viewModelScope.launch {
+            refreshCurrentPhone()
             val phone = _uiState.value.userPhone
             if (phone.isNullOrBlank()) {
                 _uiState.update {
@@ -225,6 +226,18 @@ class SupportViewModel @Inject constructor(
                     ) 
                 }
             }
+        }
+    }
+
+    private suspend fun refreshCurrentPhone() {
+        try {
+            val response = apiService.me()
+            if (response.isSuccessful) {
+                val profile = response.body()?.data
+                _uiState.update { it.copy(userPhone = profile?.phone) }
+            }
+        } catch (_: Exception) {
+            // ignore failures here and let existing phone state remain
         }
     }
 
