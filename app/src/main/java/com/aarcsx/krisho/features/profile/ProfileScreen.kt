@@ -1,5 +1,6 @@
 package com.aarcsx.krisho.features.profile
 
+import android.app.Activity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -16,10 +17,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.material.icons.filled.Logout
+import com.aarcsx.krisho.R
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.aarcsx.krisho.core.designsystem.components.*
 import com.aarcsx.krisho.core.designsystem.theme.ForestGreen
@@ -44,12 +48,12 @@ fun ProfileScreen(
                 .padding(paddingValues)
         ) {
             AgriSubHeader(
-                title = "My Profile",
+                title = stringResource(R.string.my_profile),
                 onBackClick = onBackClick,
                 trailingAction = {
                     TextButton(onClick = { viewModel.logout(onLogoutSuccess) }) {
                         Text(
-                            "Logout",
+                            stringResource(R.string.logout),
                             color = MaterialTheme.colorScheme.error,
                             fontWeight = FontWeight.Bold
                         )
@@ -98,7 +102,7 @@ fun ProfileScreen(
                                 color = ForestGreen
                             )
                             Text(
-                                "Farmer • ${uiState.location}",
+                                stringResource(R.string.farmer_location, uiState.location),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = Color.Gray
                             )
@@ -110,18 +114,18 @@ fun ProfileScreen(
 
                 // Settings List
                 ProfileSettingItem(
-                    title = "Language",
+                    title = stringResource(R.string.language),
                     value = uiState.selectedLanguage,
                     onClick = { viewModel.toggleLanguageDialog(true) }
                 )
                 ProfileSettingItem(
-                    title = "Phone number",
-                    value = uiState.profile?.phone ?: "Add phone number",
+                    title = stringResource(R.string.phone_number),
+                    value = uiState.profile?.phone ?: stringResource(R.string.add_phone_number),
                     onClick = { viewModel.togglePhoneDialog(true) }
                 )
-                ProfileSettingItem("Help Center", onClick = onNavigateToHelp)
-                ProfileSettingItem("Privacy Policy", onClick = onNavigateToPrivacy)
-                ProfileSettingItem("Terms of Service", onClick = onNavigateToTerms)
+                ProfileSettingItem(stringResource(R.string.help_center), onClick = onNavigateToHelp)
+                ProfileSettingItem(stringResource(R.string.privacy_policy), onClick = onNavigateToPrivacy)
+                ProfileSettingItem(stringResource(R.string.terms_of_service), onClick = onNavigateToTerms)
 
                 Spacer(modifier = Modifier.height(24.dp))
 
@@ -134,7 +138,7 @@ fun ProfileScreen(
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         Text(
-                            text = "App Version",
+                            text = stringResource(R.string.app_version),
                             style = MaterialTheme.typography.labelMedium,
                             color = Color.Gray
                         )
@@ -150,22 +154,28 @@ fun ProfileScreen(
         }
     }
 
+    val activity = LocalContext.current as? Activity
+
     if (uiState.showLanguageDialog) {
         LanguageSelectionDialog(
             currentLang = if (uiState.selectedLanguage == "Hindi") "hi" else "en",
             onDismiss = { viewModel.toggleLanguageDialog(false) },
-            onLanguageSelected = { viewModel.updateLanguage(it) }
+            onLanguageSelected = {
+                viewModel.updateLanguage(it) {
+                    activity?.recreate()
+                }
+            }
         )
     }
 
     if (uiState.showPhoneDialog) {
         AlertDialog(
             onDismissRequest = { viewModel.togglePhoneDialog(false) },
-            title = { Text("Update Phone Number") },
+            title = { Text(stringResource(R.string.update_phone_number)) },
             text = {
                 Column {
                     Text(
-                        "Enter a phone number so our team can call you back.",
+                        stringResource(R.string.enter_phone_prompt),
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.Gray
                     )
@@ -173,7 +183,7 @@ fun ProfileScreen(
                     OutlinedTextField(
                         value = uiState.phoneInput,
                         onValueChange = { viewModel.updatePhoneInput(it) },
-                        placeholder = { Text("Enter phone number") },
+                        placeholder = { Text(stringResource(R.string.enter_phone_number)) },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier.fillMaxWidth(),
@@ -186,12 +196,12 @@ fun ProfileScreen(
             },
             confirmButton = {
                 TextButton(onClick = { viewModel.updatePhone(uiState.phoneInput) }) {
-                    Text("Save", color = ForestGreen)
+                    Text(stringResource(R.string.save), color = ForestGreen)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { viewModel.togglePhoneDialog(false) }) {
-                    Text("Cancel", color = ForestGreen)
+                    Text(stringResource(R.string.cancel), color = ForestGreen)
                 }
             }
         )
@@ -206,15 +216,15 @@ fun LanguageSelectionDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Select Language") },
+        title = { Text(stringResource(R.string.select_language)) },
         text = {
             Column {
-                LanguageItem("English", "en", currentLang == "en") { onLanguageSelected("en") }
-                LanguageItem("Hindi", "hi", currentLang == "hi") { onLanguageSelected("hi") }
+                LanguageItem(stringResource(R.string.english), "en", currentLang == "en") { onLanguageSelected("en") }
+                LanguageItem(stringResource(R.string.hindi), "hi", currentLang == "hi") { onLanguageSelected("hi") }
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel", color = ForestGreen) }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel), color = ForestGreen) }
         }
     )
 }

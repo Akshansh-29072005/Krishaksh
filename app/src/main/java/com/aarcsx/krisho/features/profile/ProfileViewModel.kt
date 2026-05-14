@@ -109,10 +109,11 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    fun updateLanguage(langCode: String) {
+    fun updateLanguage(langCode: String, onSaved: () -> Unit = {}) {
         viewModelScope.launch {
             userRepository.saveLanguage(langCode)
             toggleLanguageDialog(false)
+            onSaved()
         }
     }
 

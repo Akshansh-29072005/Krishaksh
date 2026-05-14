@@ -111,6 +111,10 @@ class SupportViewModel @Inject constructor(
         _uiState.update { it.copy(isRecording = false) }
     }
 
+    fun onVoicePermissionDenied() {
+        _uiState.update { it.copy(error = "Microphone permission is required to record voice messages") }
+    }
+
     fun sendSupportRequest() {
         viewModelScope.launch {
             try {

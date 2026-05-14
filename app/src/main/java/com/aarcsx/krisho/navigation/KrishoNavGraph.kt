@@ -9,9 +9,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.annotation.StringRes
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.*
 import androidx.navigation.NavType
@@ -19,6 +21,7 @@ import androidx.navigation.navArgument
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.foundation.layout.Box
+import com.aarcsx.krisho.R
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Alignment
@@ -37,15 +40,15 @@ import com.aarcsx.krisho.features.legal.*
 data class BottomNavItem(
     val screen: Screen,
     val icon: ImageVector,
-    val label: String
+    @StringRes val labelRes: Int
 )
 
 val bottomNavItems = listOf(
-    BottomNavItem(Screen.Home, Icons.Default.Home, "Home"),
-    BottomNavItem(Screen.History, Icons.Default.History, "History"),
-    BottomNavItem(Screen.Products, Icons.Default.ShoppingCart, "Products"),
-    BottomNavItem(Screen.Support, Icons.Default.SupportAgent, "Support"),
-    BottomNavItem(Screen.Profile, Icons.Default.Person, "Profile")
+    BottomNavItem(Screen.Home, Icons.Default.Home, R.string.home),
+    BottomNavItem(Screen.History, Icons.Default.History, R.string.history),
+    BottomNavItem(Screen.Products, Icons.Default.ShoppingCart, R.string.products),
+    BottomNavItem(Screen.Support, Icons.Default.SupportAgent, R.string.support),
+    BottomNavItem(Screen.Profile, Icons.Default.Person, R.string.profile)
 )
 
 
@@ -205,8 +208,8 @@ fun MainScaffold(
             ) {
                 bottomNavItems.forEach { item ->
                     NavigationBarItem(
-                        icon = { Icon(item.icon, contentDescription = item.label) },
-                        label = { Text(item.label) },
+                        icon = { Icon(item.icon, contentDescription = stringResource(item.labelRes)) },
+                        label = { Text(stringResource(item.labelRes)) },
                         selected = currentRoute == item.screen.route,
                         onClick = {
                             if (currentRoute != item.screen.route) {

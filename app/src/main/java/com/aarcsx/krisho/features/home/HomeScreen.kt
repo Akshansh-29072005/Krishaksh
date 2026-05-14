@@ -13,9 +13,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.aarcsx.krisho.R
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.aarcsx.krisho.core.designsystem.components.*
 
@@ -141,8 +143,8 @@ private fun HomeContent(
                 "storm", "thunderstorm" -> WeatherType.STORMY
                 else -> WeatherType.SUNNY
             },
-            alertTitle = uiState.alerts.firstOrNull()?.title ?: "Safe Zone",
-            alertDesc = uiState.alerts.firstOrNull()?.description ?: "No disease outbreaks reported in ${uiState.location}."
+            alertTitle = uiState.alerts.firstOrNull()?.title ?: stringResource(R.string.safe_zone),
+            alertDesc = uiState.alerts.firstOrNull()?.description ?: stringResource(R.string.no_disease_outbreaks, uiState.location)
         )
 
         // 4. Featured Partners Section
@@ -184,8 +186,8 @@ private fun HomeContent(
                 onClick = { /* TODO */ }
             )
         } ?: AgriRecommendationCard(
-            title = "Stay Proactive",
-            description = "Keep scanning your crops regularly to detect diseases early.",
+            title = stringResource(R.string.stay_proactive),
+            description = stringResource(R.string.scan_regularly_prompt),
             onClick = { /* TODO */ }
         )
     }

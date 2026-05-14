@@ -16,9 +16,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.aarcsx.krisho.R
 import com.aarcsx.krisho.core.designsystem.components.*
 
 @Composable
@@ -34,6 +37,8 @@ fun SupportScreen(
     ) { isGranted ->
         if (isGranted) {
             viewModel.startRecording()
+        } else {
+            viewModel.onVoicePermissionDenied()
         }
     }
 
@@ -47,7 +52,7 @@ fun SupportScreen(
         ) {
             item {
                 AgriSubHeader(
-                    title = "Help & Support",
+                    title = stringResource(R.string.help_support_title),
                     onBackClick = onBackClick
                 )
             }
@@ -67,7 +72,7 @@ fun SupportScreen(
                     ) {
                         Column(modifier = Modifier.padding(24.dp)) {
                             Text(
-                                "How can we help you today?",
+                                stringResource(R.string.help_support_prompt),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = ForestGreen
@@ -76,7 +81,7 @@ fun SupportScreen(
                             OutlinedTextField(
                                 value = uiState.message,
                                 onValueChange = { viewModel.onMessageChange(it) },
-                                placeholder = { Text("Describe your issue...") },
+                                placeholder = { Text(stringResource(R.string.describe_issue_placeholder)) },
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(140.dp),
@@ -95,7 +100,7 @@ fun SupportScreen(
                                     Icon(Icons.Default.Mic, contentDescription = null, tint = ForestGreen)
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Text(
-                                        "Voice message recorded (${uiState.recordingDuration}s)",
+                                        stringResource(R.string.voice_message_recorded, uiState.recordingDuration),
                                         style = MaterialTheme.typography.bodySmall,
                                         color = ForestGreen
                                     )
@@ -122,7 +127,7 @@ fun SupportScreen(
                                     } else {
                                         Icon(Icons.Default.Send, contentDescription = null)
                                         Spacer(modifier = Modifier.width(8.dp))
-                                        Text("Send")
+                                        Text(stringResource(R.string.send))
                                     }
                                 }
 
@@ -149,7 +154,10 @@ fun SupportScreen(
                                         contentDescription = null
                                     )
                                     Spacer(modifier = Modifier.width(8.dp))
-                                    Text(if (uiState.isRecording) "Stop" else "Voice")
+                                    Text(
+                                        if (uiState.isRecording) stringResource(R.string.stop_recording)
+                                        else stringResource(R.string.voice_button)
+                                    )
                                 }
                             }
                         }
@@ -189,7 +197,7 @@ fun SupportScreen(
                                 Icon(Icons.Default.CheckCircle, contentDescription = null, tint = ForestGreen)
                                 Spacer(modifier = Modifier.width(12.dp))
                                 Text(
-                                    "Support request sent successfully!",
+                                    stringResource(R.string.support_request_sent),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = ForestGreen,
                                     fontWeight = FontWeight.Medium
@@ -204,7 +212,7 @@ fun SupportScreen(
                 item {
                     Spacer(modifier = Modifier.height(24.dp))
                     Text(
-                        "Your Support Tickets",
+                        stringResource(R.string.your_support_tickets),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = ForestGreen,
@@ -239,21 +247,21 @@ fun SupportScreen(
     if (uiState.showPhoneRequiredDialog) {
         AlertDialog(
             onDismissRequest = { viewModel.clearPhoneRequiredDialog() },
-            title = { Text("Phone number required") },
+            title = { Text(stringResource(R.string.phone_number_required)) },
             text = {
-                Text("You must add a phone number in your profile before requesting a callback.")
+                Text(stringResource(R.string.phone_required_message))
             },
             confirmButton = {
                 TextButton(onClick = {
                     viewModel.clearPhoneRequiredDialog()
                     onGoToProfile()
                 }) {
-                    Text("Update Phone")
+                    Text(stringResource(R.string.update_phone))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { viewModel.clearPhoneRequiredDialog() }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.cancel))
                 }
             }
         )
@@ -341,7 +349,7 @@ fun TicketCard(
                         modifier = Modifier.size(16.dp)
                     )
                     Text(
-                        "Callback: ${ticket.callback_status}",
+                        stringResource(R.string.callback_status, ticket.callback_status),
                         style = MaterialTheme.typography.labelSmall,
                         color = ForestGreen,
                         fontWeight = FontWeight.Medium
@@ -361,7 +369,7 @@ fun TicketCard(
                 ) {
                     Icon(Icons.Default.Call, contentDescription = null, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("Request Callback", style = MaterialTheme.typography.labelSmall)
+                    Text(stringResource(R.string.request_callback), style = MaterialTheme.typography.labelSmall)
                 }
             }
         }
