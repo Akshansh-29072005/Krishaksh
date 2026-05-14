@@ -18,7 +18,10 @@ data class SupportTicketDto(
     val callback_requested: Boolean,
     val callback_status: String,
     val created_at: String,
-    val updated_at: String
+    val updated_at: String,
+    val resolved: Boolean = false,
+    val resolution_response: String? = null,
+    val resolution_audio_url: String? = null
 )
 
 data class SupportMessageDto(

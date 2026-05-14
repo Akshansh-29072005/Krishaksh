@@ -28,6 +28,7 @@ import com.aarcsx.krisho.core.designsystem.components.*
 fun SupportScreen(
     onBackClick: () -> Unit = {},
     onGoToProfile: () -> Unit = {},
+    onViewResponse: (ticketId: String) -> Unit = {},
     viewModel: SupportViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -105,6 +106,18 @@ fun SupportScreen(
                                         color = ForestGreen
                                     )
                                 }
+                            }
+
+                            if (uiState.isRecording) {
+                                Spacer(modifier = Modifier.height(8.dp))
+                                val remainingSeconds = 60 - (uiState.recordingDuration / 1000)
+                                val durationColor = if (remainingSeconds <= 10) Color.Red else Color.Gray
+                                Text(
+                                    "Recording: $remainingSeconds seconds remaining (max 60 sec)",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = durationColor,
+                                    fontWeight = if (remainingSeconds <= 10) FontWeight.Bold else FontWeight.Normal
+                                )
                             }
 
                             Spacer(modifier = Modifier.height(24.dp))
@@ -226,6 +239,7 @@ fun SupportScreen(
                         ticket = ticket,
                         canRequestCallback = uiState.userPhone?.isNotBlank() == true,
                         onCallbackClick = { viewModel.requestCallback(ticket.id) },
+                        onViewResponseClick = { onViewResponse(ticket.id) },
                         modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
                     )
                 }
@@ -273,6 +287,7 @@ fun TicketCard(
     ticket: com.aarcsx.krisho.core.network.dto.SupportTicketDto,
     canRequestCallback: Boolean,
     onCallbackClick: () -> Unit,
+    onViewResponseClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -288,12 +303,29 @@ fun TicketCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    ticket.title,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.weight(1f)
-                )
+                Row(
+                    modifier = Modifier.weight(1f),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        ticket.title,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.weight(1f)
+                    )
+                    // Green dot for resolved tickets
+                    if (ticket.resolved) {
+                        Box(
+                            modifier = Modifier
+                                .size(12.dp)
+                                .background(
+                                    color = Color(0xFF4CAF50),
+                                    shape = androidx.compose.foundation.shape.CircleShape
+                                )
+                        )
+                    }
+                }
                 
                 val statusColor = when (ticket.status) {
                     "open" -> Color(0xFFFFA500)
@@ -329,8 +361,24 @@ fun TicketCard(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Callback Status
-            if (ticket.callback_requested && canRequestCallback) {
+            // Callback Status or Request Callback / Response Button
+            if (ticket.resolved && !ticket.resolution_response.isNullOrEmpty()) {
+                Button(
+                    onClick = onViewResponseClick,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(40.dp),
+                    shape = RoundedCornerShape(8.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = ForestGreen.copy(alpha = 0.2f),
+                        contentColor = ForestGreen
+                    )
+                ) {
+                    Icon(Icons.Default.Chat, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("View Response", style = MaterialTheme.typography.labelSmall)
+                }
+            } else if (ticket.callback_requested && canRequestCallback) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()

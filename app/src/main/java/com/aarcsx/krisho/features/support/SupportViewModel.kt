@@ -95,10 +95,18 @@ class SupportViewModel @Inject constructor(
             
             recordingJob?.cancel()
             recordingJob = viewModelScope.launch {
-                while (true) {
-                    delay(1000)
-                    _uiState.update { it.copy(recordingDuration = it.recordingDuration + 1) }
+                var elapsedMillis = 0L
+                val maxDurationMs = 60_000L // 60 seconds
+                
+                while (elapsedMillis < maxDurationMs) {
+                    delay(100) // Update every 100ms for smooth countdown
+                    elapsedMillis += 100
+                    _uiState.update { it.copy(recordingDuration = elapsedMillis / 1000) } // Convert to seconds
                 }
+                
+                // Auto-stop when max duration reached
+                stopRecording()
+                _uiState.update { it.copy(error = "Recording limited to 60 seconds") }
             }
         } catch (e: Exception) {
             _uiState.update { it.copy(error = "Failed to start recording") }
@@ -121,9 +129,23 @@ class SupportViewModel @Inject constructor(
                 _uiState.update { it.copy(isSending = true, error = null) }
                 
                 val currentState = _uiState.value
+                // Auto-fill description with "Voice Attached" if only audio is sent
+                val finalDescription = if (currentState.message.isNotBlank()) {
+                    currentState.message
+                } else if (currentState.audioFile != null) {
+                    "Voice Attached"
+                } else {
+                    ""
+                }
+
+                if (finalDescription.isBlank()) {
+                    _uiState.update { it.copy(isSending = false, error = "Please describe your issue or record a voice message") }
+                    return@launch
+                }
+
                 val request = CreateTicketDto(
                     title = "Support Request",
-                    description = currentState.message,
+                    description = finalDescription,
                     priority = "high",
                     request_callback = false
                 )

@@ -33,6 +33,7 @@ import com.aarcsx.krisho.features.history.HistoryScreen
 import com.aarcsx.krisho.features.products.ProductsScreen
 import com.aarcsx.krisho.features.products.ProductDetailScreen
 import com.aarcsx.krisho.features.support.SupportScreen
+import com.aarcsx.krisho.features.support.SupportResponseScreen
 import com.aarcsx.krisho.features.profile.ProfileScreen
 import com.aarcsx.krisho.features.scan.*
 import com.aarcsx.krisho.features.legal.*
@@ -111,6 +112,9 @@ fun KrishoNavGraph(
                             launchSingleTop = true
                             restoreState = true
                         }
+                    },
+                    onViewResponse = { ticketId ->
+                        navController.navigate(Screen.SupportResponse.createRoute(ticketId))
                     }
                 )
             }
@@ -185,6 +189,31 @@ fun KrishoNavGraph(
                                 Text("Go Back")
                             }
                         }
+                    }
+                }
+            }
+        }
+        composable(
+            route = Screen.SupportResponse.route,
+            arguments = listOf(navArgument("ticketId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val ticketId = backStackEntry.arguments?.getString("ticketId") ?: ""
+            val supportViewModel: com.aarcsx.krisho.features.support.SupportViewModel = hiltViewModel()
+            val uiState by supportViewModel.uiState.collectAsState()
+            
+            // Find the ticket from the cached list
+            val ticket = uiState.tickets.find { it.id == ticketId }
+            
+            if (ticket != null) {
+                SupportResponseScreen(
+                    ticket = ticket,
+                    onBackClick = { navController.popBackStack() }
+                )
+            } else {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        CircularProgressIndicator(color = ForestGreen)
+                        Text("Loading response...", color = Color.Gray)
                     }
                 }
             }
