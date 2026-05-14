@@ -34,7 +34,7 @@ android {
     buildTypes {
         debug {
             signingConfig = signingConfigs.getByName("release")
-            buildConfigField("String", "BASE_URL", "\"http://192.168.31.102/api/v1/\"")
+            buildConfigField("String", "BASE_URL", "\"https://api-krisho.aarcsx.com/api/v1/\"")
             buildConfigField("String", "RAZORPAY_KEY_ID", "\"rzp_test_SngDkzeaoqQi4o\"")
             manifestPlaceholders["appLabel"] = "Krisho Dev"
         }
@@ -42,7 +42,7 @@ android {
             initWith(getByName("release"))
             applicationIdSuffix = ".staging"
             matchingFallbacks.add("release")
-            buildConfigField("String", "BASE_URL", "\"https://api.staging.krisho.aarcsx.com/v1/\"")
+            buildConfigField("String", "BASE_URL", "\"https://api.staging.krisho.aarcsx.com/api/v1/\"")
             buildConfigField("String", "RAZORPAY_KEY_ID", "\"rzp_test_SngDkzeaoqQi4o\"")
             manifestPlaceholders["appLabel"] = "Krisho Staging"
         }
@@ -52,7 +52,7 @@ android {
             signingConfig = signingConfigs.getByName("release")
             buildConfigField("String", "BASE_URL", "\"https://api-krisho.aarcsx.com/api/v1/\"")
             buildConfigField("String", "RAZORPAY_KEY_ID", "\"rzp_test_SngDkzeaoqQi4o\"")
-            manifestPlaceholders["appLabel"] = "Krisho"
+            manifestPlaceholders["appLabel"] = "Krisho: Farmer's AI"
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
