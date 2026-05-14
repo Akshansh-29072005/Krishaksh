@@ -7,6 +7,7 @@ import (
 	"github.com/aarcsx/krisho-backend/internal/core/response"
 	"github.com/aarcsx/krisho-backend/internal/modules/support/dto"
 	"github.com/aarcsx/krisho-backend/internal/modules/support/service"
+	"github.com/aarcsx/krisho-backend/internal/observability"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -31,6 +32,7 @@ func (h *SupportHandler) CreateTicket(c *gin.Context) {
 
 	ticket, err := h.service.CreateTicket(c.Request.Context(), userID, req)
 	if err != nil {
+		observability.InitLogger().Error("support_create_ticket_failed", "error", err.Error(), "user_id", userID.String(), "path", c.FullPath())
 		response.Error(c, http.StatusInternalServerError, "Failed to create ticket")
 		return
 	}
