@@ -12,6 +12,7 @@ type AuthRepository interface {
 	FindUserByGoogleID(ctx context.Context, googleID string) (*models.User, error)
 	GetUserByID(ctx context.Context, userID uuid.UUID) (*models.User, error)
 	CreateUser(ctx context.Context, user *models.User) error
+	UpdatePhoneNumber(ctx context.Context, userID uuid.UUID, phone string) error
 	GetRoleByName(ctx context.Context, name string) (*models.Role, error)
 	StoreRefreshToken(ctx context.Context, token *models.RefreshToken) error
 	RevokeRefreshToken(ctx context.Context, tokenStr string) error
@@ -69,6 +70,12 @@ func (r *authRepoImpl) CreateUser(ctx context.Context, user *models.User) error 
 		user.ID, user.GoogleID, user.FullName, user.Email, user.Language,
 		user.RoleID, user.DeviceToken, user.CreatedAt, user.UpdatedAt,
 	)
+	return err
+}
+
+func (r *authRepoImpl) UpdatePhoneNumber(ctx context.Context, userID uuid.UUID, phone string) error {
+	query := `UPDATE users SET phone_number = $1, updated_at = NOW() WHERE id = $2`
+	_, err := r.db.Pool.Exec(ctx, query, phone, userID)
 	return err
 }
 

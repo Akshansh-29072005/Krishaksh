@@ -13,6 +13,7 @@ func RegisterUserRoutes(router *gin.RouterGroup, userHandler *handler.UserHandle
 	userGroup.Use(middleware.RequireAuth())
 	{
 		userGroup.GET("/me", userHandler.GetMe)
+		userGroup.PUT("/me/phone", userHandler.UpdatePhone)
 
 		// Example of RBAC logic
 		userGroup.GET("/admin-only", middleware.RequireRole("ADMIN"), func(c *gin.Context) {
