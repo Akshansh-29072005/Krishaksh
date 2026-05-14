@@ -1,5 +1,7 @@
 package com.aarcsx.krisho.features.scan
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -8,6 +10,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Camera
+import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -48,6 +51,17 @@ fun ScanScreen(
     val uiState by viewModel.uiState.collectAsState()
     var capturedImage by remember { mutableStateOf<Bitmap?>(null) }
     var imageCapture: ImageCapture? by remember { mutableStateOf(null) }
+
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let {
+            context.contentResolver.openInputStream(it)?.use { stream ->
+                val bytes = stream.readBytes()
+                capturedImage = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+            }
+        }
+    }
 
     val cameraExecutor = remember { Executors.newSingleThreadExecutor() }
 
@@ -134,38 +148,61 @@ fun ScanScreen(
                     modifier = Modifier.padding(bottom = 24.dp)
                 )
 
-                Surface(
-                    onClick = {
-                        val capture = imageCapture ?: return@Surface
-                        capture.takePicture(
-                            ContextCompat.getMainExecutor(context),
-                            object : ImageCapture.OnImageCapturedCallback() {
-                                override fun onCaptureSuccess(image: ImageProxy) {
-                                    val buffer = image.planes[0].buffer
-                                    val bytes = ByteArray(buffer.remaining())
-                                    buffer.get(bytes)
-                                    capturedImage =
-                                        BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-                                    image.close()
-                                }
-
-                                override fun onError(exc: ImageCaptureException) {
-                                    // Handle error
-                                }
-                            }
-                        )
-                    },
-                    shape = CircleShape,
-                    color = Color.White,
-                    modifier = Modifier.size(80.dp)
+                Row(
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            Icons.Default.Camera,
-                            contentDescription = "Capture",
-                            tint = ForestGreen,
-                            modifier = Modifier.size(32.dp)
-                        )
+                    Surface(
+                        onClick = { galleryLauncher.launch("image/*") },
+                        shape = CircleShape,
+                        color = Color.White,
+                        modifier = Modifier.size(56.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                Icons.Default.PhotoLibrary,
+                                contentDescription = "Gallery",
+                                tint = ForestGreen,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.width(32.dp))
+
+                    Surface(
+                        onClick = {
+                            val capture = imageCapture ?: return@Surface
+                            capture.takePicture(
+                                ContextCompat.getMainExecutor(context),
+                                object : ImageCapture.OnImageCapturedCallback() {
+                                    override fun onCaptureSuccess(image: ImageProxy) {
+                                        val buffer = image.planes[0].buffer
+                                        val bytes = ByteArray(buffer.remaining())
+                                        buffer.get(bytes)
+                                        capturedImage =
+                                            BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                                        image.close()
+                                    }
+
+                                    override fun onError(exc: ImageCaptureException) {
+                                        // Handle error
+                                    }
+                                }
+                            )
+                        },
+                        shape = CircleShape,
+                        color = Color.White,
+                        modifier = Modifier.size(80.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                Icons.Default.Camera,
+                                contentDescription = "Capture",
+                                tint = ForestGreen,
+                                modifier = Modifier.size(32.dp)
+                            )
+                        }
                     }
                 }
             }
