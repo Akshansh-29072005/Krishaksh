@@ -14,5 +14,7 @@ func RegisterSupportRoutes(router *gin.RouterGroup, h *handler.SupportHandler) {
 		support.GET("/tickets", h.GetTickets)
 		support.GET("/tickets/:id", h.GetTicket)
 		support.POST("/tickets/:id/messages", h.SendMessage)
+		support.POST("/tickets/:id/callback", h.RequestCallback)
+		support.POST("/tickets/:id/voice", h.UploadVoice)
 	}
 }

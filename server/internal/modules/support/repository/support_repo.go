@@ -14,8 +14,10 @@ type SupportRepository interface {
 	GetTicketsByUser(ctx context.Context, userID uuid.UUID) ([]*models.SupportTicket, error)
 	GetTicketByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*models.SupportTicket, error)
 	UpdateTicketStatus(ctx context.Context, id uuid.UUID, status string) error
+	RequestCallback(ctx context.Context, id uuid.UUID, userID uuid.UUID) error
 	AddMessage(ctx context.Context, msg *models.SupportMessage) error
 	GetMessages(ctx context.Context, ticketID uuid.UUID) ([]*models.SupportMessage, error)
+	CreateAttachment(ctx context.Context, attachment *models.SupportAttachment) error
 }
 
 type supportRepoImpl struct {
@@ -27,15 +29,15 @@ func NewSupportRepository(db *database.DB) SupportRepository {
 }
 
 func (r *supportRepoImpl) CreateTicket(ctx context.Context, ticket *models.SupportTicket) error {
-	q := `INSERT INTO support_tickets (id, user_id, title, description, status, priority, created_at, updated_at)
-	      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`
+	q := `INSERT INTO support_tickets (id, user_id, title, description, status, priority, callback_requested, callback_status, created_at, updated_at)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`
 	_, err := r.db.Pool.Exec(ctx, q, ticket.ID, ticket.UserID, ticket.Title, ticket.Description,
-		ticket.Status, ticket.Priority, ticket.CreatedAt, ticket.UpdatedAt)
+		ticket.Status, ticket.Priority, ticket.CallbackRequested, ticket.CallbackStatus, ticket.CreatedAt, ticket.UpdatedAt)
 	return err
 }
 
 func (r *supportRepoImpl) GetTicketsByUser(ctx context.Context, userID uuid.UUID) ([]*models.SupportTicket, error) {
-	q := `SELECT id, user_id, title, description, status, priority, assigned_to, created_at, updated_at, resolved_at
+	q := `SELECT id, user_id, title, description, status, priority, assigned_to, callback_requested, callback_status, created_at, updated_at, resolved_at
 	      FROM support_tickets WHERE user_id = $1 ORDER BY created_at DESC`
 	rows, err := r.db.Pool.Query(ctx, q, userID)
 	if err != nil {
@@ -47,7 +49,7 @@ func (r *supportRepoImpl) GetTicketsByUser(ctx context.Context, userID uuid.UUID
 	for rows.Next() {
 		t := &models.SupportTicket{}
 		if err := rows.Scan(&t.ID, &t.UserID, &t.Title, &t.Description, &t.Status, &t.Priority,
-			&t.AssignedTo, &t.CreatedAt, &t.UpdatedAt, &t.ResolvedAt); err != nil {
+			&t.AssignedTo, &t.CallbackRequested, &t.CallbackStatus, &t.CreatedAt, &t.UpdatedAt, &t.ResolvedAt); err != nil {
 			return nil, err
 		}
 		tickets = append(tickets, t)
@@ -56,11 +58,11 @@ func (r *supportRepoImpl) GetTicketsByUser(ctx context.Context, userID uuid.UUID
 }
 
 func (r *supportRepoImpl) GetTicketByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*models.SupportTicket, error) {
-	q := `SELECT id, user_id, title, description, status, priority, assigned_to, created_at, updated_at, resolved_at
+	q := `SELECT id, user_id, title, description, status, priority, assigned_to, callback_requested, callback_status, created_at, updated_at, resolved_at
 	      FROM support_tickets WHERE id = $1 AND user_id = $2`
 	t := &models.SupportTicket{}
 	err := r.db.Pool.QueryRow(ctx, q, id, userID).Scan(&t.ID, &t.UserID, &t.Title, &t.Description, &t.Status,
-		&t.Priority, &t.AssignedTo, &t.CreatedAt, &t.UpdatedAt, &t.ResolvedAt)
+		&t.Priority, &t.AssignedTo, &t.CallbackRequested, &t.CallbackStatus, &t.CreatedAt, &t.UpdatedAt, &t.ResolvedAt)
 	return t, err
 }
 
@@ -72,6 +74,12 @@ func (r *supportRepoImpl) UpdateTicketStatus(ctx context.Context, id uuid.UUID, 
 	}
 	q := `UPDATE support_tickets SET status = $1, resolved_at = $2, updated_at = NOW() WHERE id = $3`
 	_, err := r.db.Pool.Exec(ctx, q, status, resolvedAt, id)
+	return err
+}
+
+func (r *supportRepoImpl) RequestCallback(ctx context.Context, id uuid.UUID, userID uuid.UUID) error {
+	q := `UPDATE support_tickets SET callback_requested = TRUE, callback_status = 'pending', updated_at = NOW() WHERE id = $1 AND user_id = $2`
+	_, err := r.db.Pool.Exec(ctx, q, id, userID)
 	return err
 }
 
@@ -100,4 +108,11 @@ func (r *supportRepoImpl) GetMessages(ctx context.Context, ticketID uuid.UUID) (
 		msgs = append(msgs, m)
 	}
 	return msgs, nil
+}
+
+func (r *supportRepoImpl) CreateAttachment(ctx context.Context, attachment *models.SupportAttachment) error {
+	q := `INSERT INTO support_attachments (id, ticket_id, message_id, uploader_id, file_url, file_type, file_size_bytes, created_at)
+	      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`
+	_, err := r.db.Pool.Exec(ctx, q, attachment.ID, attachment.TicketID, attachment.MessageID, attachment.UploaderID, attachment.FileURL, attachment.FileType, attachment.FileSizeBytes, attachment.CreatedAt)
+	return err
 }

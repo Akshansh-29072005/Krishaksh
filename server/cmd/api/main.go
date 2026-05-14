@@ -69,6 +69,10 @@ import (
 	scanRepo "github.com/aarcsx/krisho-backend/internal/modules/scans/repository"
 	scanRoutes "github.com/aarcsx/krisho-backend/internal/modules/scans/routes"
 	scanService "github.com/aarcsx/krisho-backend/internal/modules/scans/service"
+	supportHandler "github.com/aarcsx/krisho-backend/internal/modules/support/handler"
+	supportRepo "github.com/aarcsx/krisho-backend/internal/modules/support/repository"
+	supportRoutes "github.com/aarcsx/krisho-backend/internal/modules/support/routes"
+	supportService "github.com/aarcsx/krisho-backend/internal/modules/support/service"
 	userHandler "github.com/aarcsx/krisho-backend/internal/modules/users/handler"
 	userRoutes "github.com/aarcsx/krisho-backend/internal/modules/users/routes"
 	workers "github.com/aarcsx/krisho-backend/internal/workers"
@@ -264,6 +268,10 @@ func main() {
 	companySvc := companyService.NewCompanyService(analyticsRepository)
 	companyH := companyHandler.NewCompanyHandler(companySvc)
 
+	supportRepository := supportRepo.NewSupportRepository(db)
+	supportSvc := supportService.NewSupportService(supportRepository, s3Client, s3Bucket)
+	supportH := supportHandler.NewSupportHandler(supportSvc)
+
 	promptMgr := internalAI.NewPromptManager("internal/ai/prompts")
 	aiMgr := internalAI.NewManager(
 		[]aiProviders.VisionProvider{
@@ -326,6 +334,7 @@ func main() {
 		analyticsRoutes.RegisterAnalyticsRoutes(v1, analyticsH)
 		adminRoutes.RegisterAdminRoutes(v1, adminH)
 		companyRoutes.RegisterCompanyRoutes(v1, companyH)
+		supportRoutes.RegisterSupportRoutes(v1, supportH)
 	}
 
 	log.Printf("Starting Krisho API Server on :%s", cfg.ServerPort)
