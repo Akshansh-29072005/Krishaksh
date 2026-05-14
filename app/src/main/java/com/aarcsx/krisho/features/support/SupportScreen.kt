@@ -24,6 +24,7 @@ import com.aarcsx.krisho.core.designsystem.components.*
 @Composable
 fun SupportScreen(
     onBackClick: () -> Unit = {},
+    onGoToProfile: () -> Unit = {},
     viewModel: SupportViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -215,6 +216,7 @@ fun SupportScreen(
                 items(uiState.tickets) { ticket ->
                     TicketCard(
                         ticket = ticket,
+                        canRequestCallback = uiState.userPhone?.isNotBlank() == true,
                         onCallbackClick = { viewModel.requestCallback(ticket.id) },
                         modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
                     )
@@ -233,11 +235,35 @@ fun SupportScreen(
             viewModel.clearSuccess()
         }
     }
+
+    if (uiState.showPhoneRequiredDialog) {
+        AlertDialog(
+            onDismissRequest = { viewModel.clearPhoneRequiredDialog() },
+            title = { Text("Phone number required") },
+            text = {
+                Text("You must add a phone number in your profile before requesting a callback.")
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.clearPhoneRequiredDialog()
+                    onGoToProfile()
+                }) {
+                    Text("Update Phone")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.clearPhoneRequiredDialog() }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 }
 
 @Composable
 fun TicketCard(
     ticket: com.aarcsx.krisho.core.network.dto.SupportTicketDto,
+    canRequestCallback: Boolean,
     onCallbackClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -296,7 +322,7 @@ fun TicketCard(
             Spacer(modifier = Modifier.height(12.dp))
 
             // Callback Status
-            if (ticket.callback_requested) {
+            if (ticket.callback_requested && canRequestCallback) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()

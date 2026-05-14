@@ -2,10 +2,12 @@ package com.aarcsx.krisho.features.support
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.aarcsx.krisho.core.common.ApiResult
 import com.aarcsx.krisho.core.common.voice.VoiceRecorderManager
 import com.aarcsx.krisho.core.network.api.UserApiService
 import com.aarcsx.krisho.core.network.dto.CreateTicketDto
 import com.aarcsx.krisho.core.network.dto.SupportTicketDto
+import com.aarcsx.krisho.core.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -30,13 +32,16 @@ data class SupportUiState(
     val success: Boolean = false,
     val isCallbackRequested: Boolean = false,
     val tickets: List<SupportTicketDto> = emptyList(),
-    val selectedTicketId: String? = null
+    val selectedTicketId: String? = null,
+    val userPhone: String? = null,
+    val showPhoneRequiredDialog: Boolean = false
 )
 
 @HiltViewModel
 class SupportViewModel @Inject constructor(
     private val voiceRecorderManager: VoiceRecorderManager,
-    private val apiService: UserApiService
+    private val apiService: UserApiService,
+    private val userRepository: UserRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SupportUiState())
@@ -46,6 +51,23 @@ class SupportViewModel @Inject constructor(
 
     init {
         loadTickets()
+        loadUserProfile()
+    }
+
+    private fun loadUserProfile() {
+        viewModelScope.launch {
+            userRepository.getProfile().collect { result ->
+                when (result) {
+                    is ApiResult.Success -> {
+                        _uiState.update { it.copy(userPhone = result.data.phone) }
+                    }
+                    is ApiResult.Error -> {
+                        _uiState.update { it.copy(error = result.message) }
+                    }
+                    else -> Unit
+                }
+            }
+        }
     }
 
     private fun loadTickets() {
@@ -157,6 +179,18 @@ class SupportViewModel @Inject constructor(
 
     fun requestCallback(ticketId: String) {
         viewModelScope.launch {
+            val phone = _uiState.value.userPhone
+            if (phone.isNullOrBlank()) {
+                _uiState.update {
+                    it.copy(
+                        isSending = false,
+                        error = "Please add your phone number in Profile to request a callback",
+                        showPhoneRequiredDialog = true
+                    )
+                }
+                return@launch
+            }
+
             try {
                 _uiState.update { it.copy(isSending = true, error = null) }
                 
@@ -171,10 +205,15 @@ class SupportViewModel @Inject constructor(
                     }
                     loadTickets()
                 } else {
+                    val message = if (response.code() == 400) {
+                        "Please update your phone number in Profile to request a callback"
+                    } else {
+                        "Failed to request callback"
+                    }
                     _uiState.update { 
                         it.copy(
                             isSending = false, 
-                            error = "Failed to request callback"
+                            error = message
                         ) 
                     }
                 }
@@ -187,6 +226,10 @@ class SupportViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    fun clearPhoneRequiredDialog() {
+        _uiState.update { it.copy(showPhoneRequiredDialog = false) }
     }
 
     fun clearError() {

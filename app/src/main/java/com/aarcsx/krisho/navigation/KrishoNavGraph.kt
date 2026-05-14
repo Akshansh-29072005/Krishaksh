@@ -100,7 +100,10 @@ fun KrishoNavGraph(
         }
         composable(Screen.Support.route) {
             MainScaffold(navController) {
-                SupportScreen(onBackClick = { navController.popBackStack() })
+                SupportScreen(
+                    onBackClick = { navController.popBackStack() },
+                    onGoToProfile = { navController.navigate(Screen.Profile.route) }
+                )
             }
         }
         composable(Screen.Profile.route) {
