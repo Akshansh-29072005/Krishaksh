@@ -54,4 +54,12 @@
     <string name="no_disease_outbreaks">%1$s में किसी रोग प्रकोप की सूचना नहीं मिली।</string>
     <string name="stay_proactive">सक्रिय रहें</string>
     <string name="scan_regularly_prompt">बीमारियों का पता लगाने के लिए अपनी फसलों को नियमित रूप से स्कैन करते रहें।</string>
+    <string name="support_response">समर्थन प्रतिक्रिया</string>
+    <string name="support_team_response">समर्थन टीम की प्रतिक्रिया</string>
+    <string name="view_response">प्रतिक्रिया देखें</string>
+    <string name="support_review_message">समर्थन टीम आपके अनुरोध की समीक्षा कर रहा है। जल्द ही वापस जांचें!</string>
+    <string name="voice_response_player">समर्थन प्रतिक्रिया</string>
+    <string name="pause">रोकें</string>
+    <string name="play">चलाएँ</string>
+    <string name="your_ticket">आपका टिकट</string>
 </resources>
