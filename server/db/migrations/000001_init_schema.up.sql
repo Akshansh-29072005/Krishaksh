@@ -60,7 +60,7 @@ CREATE TABLE IF NOT EXISTS support_tickets (
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     title VARCHAR(200) NOT NULL,
     description TEXT NOT NULL,
-    status VARCHAR(20) NOT NULL DEFAULT 'open',
+    status VARCHAR(20) NOT NULL DEFAULT 'open', -- open, in_progress, resolved, closed
     priority VARCHAR(20) DEFAULT 'medium',
     assigned_to UUID REFERENCES users(id),
     callback_requested BOOLEAN DEFAULT FALSE,

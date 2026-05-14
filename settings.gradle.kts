@@ -19,6 +19,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Krisho"
+rootProject.name = "Krisho: Farmer's AI"
 include(":app")
  
