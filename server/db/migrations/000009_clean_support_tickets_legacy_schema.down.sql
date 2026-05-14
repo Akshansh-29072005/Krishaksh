@@ -1,0 +1,12 @@
+-- Rollback: restore legacy `message` column if needed and remove fields added by this migration.
+ALTER TABLE support_tickets DROP COLUMN IF EXISTS resolved_at;
+ALTER TABLE support_tickets DROP COLUMN IF EXISTS updated_at;
+ALTER TABLE support_tickets DROP COLUMN IF EXISTS created_at;
+ALTER TABLE support_tickets DROP COLUMN IF EXISTS callback_status;
+ALTER TABLE support_tickets DROP COLUMN IF EXISTS callback_requested;
+ALTER TABLE support_tickets DROP COLUMN IF EXISTS assigned_to;
+ALTER TABLE support_tickets DROP COLUMN IF EXISTS priority;
+ALTER TABLE support_tickets DROP COLUMN IF EXISTS status;
+ALTER TABLE support_tickets DROP COLUMN IF EXISTS description;
+ALTER TABLE support_tickets DROP COLUMN IF EXISTS title;
+ALTER TABLE support_tickets ADD COLUMN IF NOT EXISTS message TEXT NOT NULL DEFAULT '';

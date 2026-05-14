@@ -1,8 +1,9 @@
 -- Add missing description column to support_tickets table
-ALTER TABLE support_tickets ADD COLUMN description TEXT NOT NULL DEFAULT '';
+ALTER TABLE support_tickets ADD COLUMN IF NOT EXISTS description TEXT;
 
--- Update default for any existing rows
-UPDATE support_tickets SET description = title WHERE description = '';
+-- Populate any missing description values
+UPDATE support_tickets SET description = title WHERE description IS NULL OR description = '';
 
--- Remove the default constraint now that rows have been populated
+-- Ensure the column is not nullable and drop the default if present
+ALTER TABLE support_tickets ALTER COLUMN description SET NOT NULL;
 ALTER TABLE support_tickets ALTER COLUMN description DROP DEFAULT;
