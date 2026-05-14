@@ -107,19 +107,6 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    fun updateCrops(crops: List<String>) {
-        viewModelScope.launch {
-            _uiState.update { it.copy(isUpdating = true) }
-            val result = userRepository.updateCrops(crops)
-            if (result is ApiResult.Success) {
-                _uiState.update { it.copy(profile = result.data, isUpdating = false) }
-            } else if (result is ApiResult.Error) {
-                _uiState.update { it.copy(isUpdating = false, error = result.message) }
-            }
-            toggleCropsDialog(false)
-        }
-    }
-
     fun logout(onSuccess: () -> Unit = {}) {
         viewModelScope.launch {
             userRepository.logout()
