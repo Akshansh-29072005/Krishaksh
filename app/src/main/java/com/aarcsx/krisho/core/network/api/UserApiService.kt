@@ -20,6 +20,13 @@ interface UserApiService {
     @POST("support/tickets/{id}/messages")
     suspend fun sendMessage(@Path("id") id: String, @Body body: SendMessageDto): Response<ApiEnvelope<SupportMessageDto>>
 
+    @POST("support/tickets/{id}/callback")
+    suspend fun requestCallback(@Path("id") id: String): Response<ApiEnvelope<SupportTicketDto>>
+
+    @Multipart
+    @POST("support/tickets/{id}/voice")
+    suspend fun uploadVoice(@Path("id") id: String, @Part voice: MultipartBody.Part): Response<ApiEnvelope<Any>>
+
     @GET("ads/featured")
     suspend fun featuredAds(): Response<ApiEnvelope<List<AdCampaignDto>>>
 

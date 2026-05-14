@@ -15,6 +15,8 @@ data class SupportTicketDto(
     val description: String,
     val status: String,
     val priority: String,
+    val callback_requested: Boolean,
+    val callback_status: String,
     val created_at: String,
     val updated_at: String
 )
@@ -34,7 +36,8 @@ data class SupportThreadDto(
 data class CreateTicketDto(
     val title: String,
     val description: String,
-    val priority: String = "medium"
+    val priority: String = "medium",
+    val request_callback: Boolean = false
 )
 
 data class SendMessageDto(
