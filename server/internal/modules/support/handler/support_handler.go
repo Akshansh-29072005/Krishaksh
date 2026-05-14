@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"net/http"
 	"strings"
 
@@ -108,6 +109,10 @@ func (h *SupportHandler) RequestCallback(c *gin.Context) {
 
 	ticket, err := h.service.RequestCallback(c.Request.Context(), userID, ticketID)
 	if err != nil {
+		if errors.Is(err, service.ErrPhoneNumberRequired) {
+			response.Error(c, http.StatusBadRequest, "Phone number required to request callback")
+			return
+		}
 		response.Error(c, http.StatusInternalServerError, "Failed to request callback")
 		return
 	}

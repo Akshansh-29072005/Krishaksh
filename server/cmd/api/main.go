@@ -269,7 +269,7 @@ func main() {
 	companyH := companyHandler.NewCompanyHandler(companySvc)
 
 	supportRepository := supportRepo.NewSupportRepository(db)
-	supportSvc := supportService.NewSupportService(supportRepository, s3Client, s3Bucket)
+	supportSvc := supportService.NewSupportService(supportRepository, authRepository, s3Client, s3Bucket)
 	supportH := supportHandler.NewSupportHandler(supportSvc)
 
 	promptMgr := internalAI.NewPromptManager("internal/ai/prompts")

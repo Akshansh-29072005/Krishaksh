@@ -15,6 +15,7 @@ type SupportRepository interface {
 	GetTicketByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*models.SupportTicket, error)
 	UpdateTicketStatus(ctx context.Context, id uuid.UUID, status string) error
 	RequestCallback(ctx context.Context, id uuid.UUID, userID uuid.UUID) error
+	CancelCallback(ctx context.Context, id uuid.UUID, userID uuid.UUID) error
 	AddMessage(ctx context.Context, msg *models.SupportMessage) error
 	GetMessages(ctx context.Context, ticketID uuid.UUID) ([]*models.SupportMessage, error)
 	CreateAttachment(ctx context.Context, attachment *models.SupportAttachment) error
@@ -79,6 +80,12 @@ func (r *supportRepoImpl) UpdateTicketStatus(ctx context.Context, id uuid.UUID, 
 
 func (r *supportRepoImpl) RequestCallback(ctx context.Context, id uuid.UUID, userID uuid.UUID) error {
 	q := `UPDATE support_tickets SET callback_requested = TRUE, callback_status = 'pending', updated_at = NOW() WHERE id = $1 AND user_id = $2`
+	_, err := r.db.Pool.Exec(ctx, q, id, userID)
+	return err
+}
+
+func (r *supportRepoImpl) CancelCallback(ctx context.Context, id uuid.UUID, userID uuid.UUID) error {
+	q := `UPDATE support_tickets SET callback_requested = FALSE, callback_status = 'none', updated_at = NOW() WHERE id = $1 AND user_id = $2`
 	_, err := r.db.Pool.Exec(ctx, q, id, userID)
 	return err
 }

@@ -2,12 +2,15 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/aarcsx/krisho-backend/internal/models"
+	authRepo "github.com/aarcsx/krisho-backend/internal/modules/auth/repository"
 	"github.com/aarcsx/krisho-backend/internal/modules/support/dto"
 	"github.com/aarcsx/krisho-backend/internal/modules/support/repository"
 	"github.com/aarcsx/krisho-backend/pkg/s3"
@@ -23,14 +26,17 @@ type SupportService interface {
 	UploadVoiceAttachment(ctx context.Context, userID uuid.UUID, ticketID uuid.UUID, file io.Reader, filename string, size int64) (*models.SupportAttachment, error)
 }
 
+var ErrPhoneNumberRequired = errors.New("phone number required for callback")
+
 type supportServiceImpl struct {
 	repo     repository.SupportRepository
+	authRepo authRepo.AuthRepository
 	s3Client s3.S3Client
 	bucket   string
 }
 
-func NewSupportService(repo repository.SupportRepository, s3Client s3.S3Client, bucket string) SupportService {
-	return &supportServiceImpl{repo: repo, s3Client: s3Client, bucket: bucket}
+func NewSupportService(repo repository.SupportRepository, authRepo authRepo.AuthRepository, s3Client s3.S3Client, bucket string) SupportService {
+	return &supportServiceImpl{repo: repo, authRepo: authRepo, s3Client: s3Client, bucket: bucket}
 }
 
 func (s *supportServiceImpl) CreateTicket(ctx context.Context, userID uuid.UUID, req dto.CreateTicketRequest) (*models.SupportTicket, error) {
@@ -80,6 +86,18 @@ func (s *supportServiceImpl) GetTicketWithThread(ctx context.Context, userID uui
 }
 
 func (s *supportServiceImpl) RequestCallback(ctx context.Context, userID uuid.UUID, ticketID uuid.UUID) (*models.SupportTicket, error) {
+	user, err := s.authRepo.GetUserByID(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load user: %w", err)
+	}
+
+	if user.PhoneNumber == nil || strings.TrimSpace(*user.PhoneNumber) == "" {
+		if cancelErr := s.repo.CancelCallback(ctx, ticketID, userID); cancelErr != nil {
+			return nil, fmt.Errorf("failed to clear callback request: %w", cancelErr)
+		}
+		return nil, ErrPhoneNumberRequired
+	}
+
 	if err := s.repo.RequestCallback(ctx, ticketID, userID); err != nil {
 		return nil, fmt.Errorf("failed to request callback: %w", err)
 	}
