@@ -19,7 +19,8 @@ data class ProfileUiState(
     val isLoading: Boolean = false,
     val error: String? = null,
     val showLanguageDialog: Boolean = false,
-    val showCropsDialog: Boolean = false,
+    val showPhoneDialog: Boolean = false,
+    val phoneInput: String = "",
     val selectedLanguage: String = "English",
     val isUpdating: Boolean = false
 )
@@ -68,7 +69,7 @@ class ProfileViewModel @Inject constructor(
             userRepository.getProfile().collect { result ->
                 when (result) {
                     is ApiResult.Loading -> _uiState.update { it.copy(isLoading = true) }
-                    is ApiResult.Success -> _uiState.update { it.copy(profile = result.data, isLoading = false, error = null) }
+                    is ApiResult.Success -> _uiState.update { it.copy(profile = result.data, phoneInput = result.data.phone ?: "", isLoading = false, error = null) }
                     is ApiResult.Error -> _uiState.update { it.copy(isLoading = false, error = result.message) }
                 }
             }
@@ -79,8 +80,24 @@ class ProfileViewModel @Inject constructor(
         _uiState.update { it.copy(showLanguageDialog = show) }
     }
 
-    fun toggleCropsDialog(show: Boolean) {
-        _uiState.update { it.copy(showCropsDialog = show) }
+    fun togglePhoneDialog(show: Boolean) {
+        _uiState.update { it.copy(showPhoneDialog = show) }
+    }
+
+    fun updatePhoneInput(phone: String) {
+        _uiState.update { it.copy(phoneInput = phone) }
+    }
+
+    fun updatePhone(phone: String) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isUpdating = true, error = null) }
+            when (val result = userRepository.updatePhone(phone)) {
+                is ApiResult.Success -> _uiState.update { it.copy(profile = result.data, phoneInput = result.data.phone ?: "", isUpdating = false, error = null) }
+                is ApiResult.Error -> _uiState.update { it.copy(isUpdating = false, error = result.message) }
+                else -> _uiState.update { it.copy(isUpdating = false, error = "Unable to update phone number") }
+            }
+            togglePhoneDialog(false)
+        }
     }
 
     fun updateLanguage(langCode: String) {

@@ -102,7 +102,13 @@ fun KrishoNavGraph(
             MainScaffold(navController) {
                 SupportScreen(
                     onBackClick = { navController.popBackStack() },
-                    onGoToProfile = { navController.navigate(Screen.Profile.route) }
+                    onGoToProfile = {
+                        navController.navigate(Screen.Profile.route) {
+                            popUpTo(navController.graph.startDestinationId) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    }
                 )
             }
         }
@@ -203,12 +209,14 @@ fun MainScaffold(
                         label = { Text(item.label) },
                         selected = currentRoute == item.screen.route,
                         onClick = {
-                            navController.navigate(item.screen.route) {
-                                popUpTo(navController.graph.startDestinationId) {
-                                    saveState = true
+                            if (currentRoute != item.screen.route) {
+                                navController.navigate(item.screen.route) {
+                                    popUpTo(navController.graph.startDestinationId) {
+                                        saveState = true
+                                    }
+                                    launchSingleTop = true
+                                    restoreState = true
                                 }
-                                launchSingleTop = true
-                                restoreState = true
                             }
                         },
                         colors = NavigationBarItemDefaults.colors(

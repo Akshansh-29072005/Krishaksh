@@ -113,9 +113,9 @@ fun ProfileScreen(
                     onClick = { viewModel.toggleLanguageDialog(true) }
                 )
                 ProfileSettingItem(
-                    title = "Crops Grown",
-                    value = uiState.profile?.crops?.joinToString(", ") ?: "Select Crops",
-                    onClick = { viewModel.toggleCropsDialog(true) }
+                    title = "Phone number",
+                    value = uiState.profile?.phone ?: "Add phone number",
+                    onClick = { viewModel.togglePhoneDialog(true) }
                 )
                 ProfileSettingItem("Help Center", onClick = onNavigateToHelp)
                 ProfileSettingItem("Privacy Policy", onClick = onNavigateToPrivacy)
@@ -156,11 +156,41 @@ fun ProfileScreen(
         )
     }
 
-    if (uiState.showCropsDialog) {
-        CropsSelectionDialog(
-            selectedCrops = uiState.profile?.crops ?: emptyList(),
-            onDismiss = { viewModel.toggleCropsDialog(false) },
-            onCropsSelected = { viewModel.updateCrops(it) }
+    if (uiState.showPhoneDialog) {
+        AlertDialog(
+            onDismissRequest = { viewModel.togglePhoneDialog(false) },
+            title = { Text("Update Phone Number") },
+            text = {
+                Column {
+                    Text(
+                        "Enter a phone number so our team can call you back.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.Gray
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    OutlinedTextField(
+                        value = uiState.phoneInput,
+                        onValueChange = { viewModel.updatePhoneInput(it) },
+                        placeholder = { Text("Enter phone number") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = ForestGreen,
+                            cursorColor = ForestGreen
+                        )
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { viewModel.updatePhone(uiState.phoneInput) }) {
+                    Text("Save", color = ForestGreen)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.togglePhoneDialog(false) }) {
+                    Text("Cancel", color = ForestGreen)
+                }
+            }
         )
     }
 }
@@ -201,57 +231,6 @@ fun LanguageItem(label: String, code: String, isSelected: Boolean, onClick: () -
     }
 }
 
-@Composable
-fun CropsSelectionDialog(
-    selectedCrops: List<String>,
-    onDismiss: () -> Unit,
-    onCropsSelected: (List<String>) -> Unit
-) {
-    val allCrops = listOf("Wheat", "Rice", "Tomato", "Potato", "Cotton", "Mustard", "Sugarcane", "Maize")
-    val currentSelection = remember { mutableStateListOf<String>().apply { addAll(selectedCrops) } }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Crops Grown") },
-        text = {
-            LazyColumn(modifier = Modifier.heightIn(max = 400.dp)) {
-                items(allCrops) { crop ->
-                    val isChecked = currentSelection.contains(crop)
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                if (isChecked) currentSelection.remove(crop) else currentSelection.add(crop)
-                            }
-                            .padding(vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Checkbox(
-                            checked = isChecked,
-                            onCheckedChange = {
-                                if (it) currentSelection.add(crop) else currentSelection.remove(crop)
-                            },
-                            colors = CheckboxDefaults.colors(checkedColor = ForestGreen)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(crop)
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            Button(
-                onClick = { onCropsSelected(currentSelection.toList()) },
-                colors = ButtonDefaults.buttonColors(containerColor = ForestGreen)
-            ) {
-                Text("Save")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel", color = ForestGreen) }
-        }
-    )
-}
 
 @Composable
 fun ProfileSettingItem(

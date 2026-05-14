@@ -9,6 +9,9 @@ interface UserApiService {
     @GET("users/me")
     suspend fun me(): Response<ApiEnvelope<UserMeDto>>
 
+    @PUT("users/me/phone")
+    suspend fun updatePhone(@Body body: UpdatePhoneDto): Response<ApiEnvelope<UserMeDto>>
+
     @GET("support/tickets")
     suspend fun getTickets(): Response<ApiEnvelope<List<SupportTicketDto>>>
 
@@ -34,6 +37,10 @@ interface UserApiService {
     @PUT("users/me/crops")
     suspend fun updateCrops(@Body body: UpdateCropsDto): Response<ApiEnvelope<UserMeDto>>
 }
+
+data class UpdatePhoneDto(
+    val phone: String
+)
 
 data class UpdateCropsDto(
     val crops: List<String>
