@@ -3,6 +3,7 @@ package weather
 import (
 	"net/http"
 
+	"github.com/aarcsx/krisho-backend/internal/core/response"
 	"github.com/gin-gonic/gin"
 )
 
@@ -22,13 +23,15 @@ func (h *Handler) Get(c *gin.Context) {
 	lat := c.Query("lat")
 	lon := c.Query("lon")
 	if lat == "" || lon == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": "lat and lon are required"})
+		response.Error(c, http.StatusBadRequest, "lat and lon are required")
 		return
 	}
 	data, source, err := h.service.Get(c.Request.Context(), lat, lon)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": err.Error()})
+		response.Error(c, http.StatusBadRequest, err.Error())
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"status": "success", "source": source, "data": data})
+
+	// Keep cache/debug source available while preserving the standard API envelope.
+	response.Success(c, http.StatusOK, source, data)
 }
