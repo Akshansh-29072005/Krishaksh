@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -6,6 +8,14 @@ plugins {
     alias(libs.plugins.google.services)
     alias(libs.plugins.firebase.crashlytics)
     id("kotlin-kapt")
+}
+
+// Load signing credentials from local.properties (never committed to git)
+val localProperties = Properties().apply {
+    val localPropertiesFile = rootProject.file("local.properties")
+    if (localPropertiesFile.exists()) {
+        localPropertiesFile.inputStream().use { load(it) }
+    }
 }
 
 android {
@@ -24,10 +34,10 @@ android {
 
     signingConfigs {
         create("release") {
-            storeFile = file("../krisho-prod-key.jks")
-            storePassword = "29072005"
-            keyAlias = "key0"
-            keyPassword = "29072005"
+            storeFile = file(localProperties.getProperty("KEYSTORE_FILE", "../krisho-prod-key.jks"))
+            storePassword = localProperties.getProperty("KEYSTORE_PASSWORD", "")
+            keyAlias = localProperties.getProperty("KEY_ALIAS", "")
+            keyPassword = localProperties.getProperty("KEY_PASSWORD", "")
         }
     }
 
@@ -51,7 +61,7 @@ android {
             isShrinkResources = true
             signingConfig = signingConfigs.getByName("release")
             buildConfigField("String", "BASE_URL", "\"https://api-krisho.aarcsx.com/api/v1/\"")
-            buildConfigField("String", "RAZORPAY_KEY_ID", "\"rzp_test_SngDkzeaoqQi4o\"")
+            buildConfigField("String", "RAZORPAY_KEY_ID", "\"${localProperties.getProperty("RAZORPAY_LIVE_KEY", "rzp_test_SngDkzeaoqQi4o")}\"")
             manifestPlaceholders["appLabel"] = "Krisho: Farmer's AI"
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
