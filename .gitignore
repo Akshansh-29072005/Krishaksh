@@ -19,3 +19,8 @@ local.properties
 *.jks
 google-services.json
 .aider*
+/app/*
+*.env
+krishoapp-firebase-adminsdk-fbsvc-77231f35c0.json
+firebase_service_account.json
+server/.env.prod.example
