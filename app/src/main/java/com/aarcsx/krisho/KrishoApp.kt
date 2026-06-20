@@ -3,6 +3,7 @@ package com.aarcsx.krisho
 import android.app.Application
 import android.util.Log
 import com.aarcsx.krisho.core.local.datastore.PreferencesManager
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import dagger.hilt.android.HiltAndroidApp
 import timber.log.Timber
 import javax.inject.Inject
@@ -30,9 +31,11 @@ class KrishoApp : Application() {
             if (priority == Log.VERBOSE || priority == Log.DEBUG) {
                 return
             }
-            // Add Firebase Crashlytics logging here
-            // FirebaseCrashlytics.getInstance().log(message)
-            // t?.let { FirebaseCrashlytics.getInstance().recordException(it) }
+            val crashlytics = FirebaseCrashlytics.getInstance()
+            crashlytics.log(if (tag != null) "[$tag] $message" else message)
+            if (t != null) {
+                crashlytics.recordException(t)
+            }
         }
     }
 }
