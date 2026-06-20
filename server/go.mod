@@ -13,6 +13,7 @@ require (
 	github.com/hibiken/asynq v0.26.0
 	github.com/jackc/pgx/v5 v5.9.2
 	github.com/joho/godotenv v1.5.1
+	github.com/mmcloughlin/geohash v0.10.0
 	github.com/redis/go-redis/v9 v9.14.1
 	google.golang.org/api v0.278.0
 )
