@@ -8,8 +8,8 @@ import (
 	"github.com/aarcsx/krisho-backend/internal/models"
 	"github.com/aarcsx/krisho-backend/internal/modules/scans/dto"
 	"github.com/aarcsx/krisho-backend/internal/modules/scans/repository"
+	"github.com/aarcsx/krisho-backend/pkg/gcs"
 	"github.com/aarcsx/krisho-backend/pkg/queue"
-	"github.com/aarcsx/krisho-backend/pkg/s3"
 	"github.com/google/uuid"
 )
 
@@ -22,15 +22,15 @@ type ScanService interface {
 
 type scanServiceImpl struct {
 	repo    repository.ScanRepository
-	s3      s3.S3Client
+	gcs     gcs.GCSClient
 	qClient queue.QueueClient
 	bucket  string
 }
 
-func NewScanService(repo repository.ScanRepository, s3Client s3.S3Client, q queue.QueueClient, bucket string) ScanService {
+func NewScanService(repo repository.ScanRepository, gcsClient gcs.GCSClient, q queue.QueueClient, bucket string) ScanService {
 	return &scanServiceImpl{
 		repo:    repo,
-		s3:      s3Client,
+		gcs:     gcsClient,
 		qClient: q,
 		bucket:  bucket,
 	}
@@ -45,17 +45,17 @@ func (s *scanServiceImpl) GetPresignedUploadURL(ctx context.Context, userID uuid
 	key := fmt.Sprintf("scans/%s/%s%s", userID.String(), uuid.New().String(), ext)
 
 	// URL expires in exactly 15 minutes, ensuring high security parameters
-	url, err := s.s3.GeneratePresignedURL(ctx, s.bucket, key, 15*time.Minute)
+	url, err := s.gcs.GeneratePresignedURL(ctx, s.bucket, key, 15*time.Minute)
 	if err != nil {
-		fmt.Printf("S3 Presign Error: %v\n", err)
+		fmt.Printf("GCS Presign Error: %v\n", err)
 	}
 	return url, key, err
 }
 
 func (s *scanServiceImpl) ProcessUpload(ctx context.Context, userID uuid.UUID, req dto.CreateScanRequest) (*models.Scan, error) {
-	// 1. In reality we should ideally hit S3 HeadObject first to verify the image size/integrity via 'req.ImageKey'
+	// 1. In reality we should ideally hit GCS HeadObject first to verify the image size/integrity via 'req.ImageKey'
 
-	imageURL := fmt.Sprintf("https://%s.s3.amazonaws.com/%s", s.bucket, req.ImageKey)
+	imageURL := fmt.Sprintf("https://storage.googleapis.com/%s/%s", s.bucket, req.ImageKey)
 
 	// 2. Insert record into PGX
 	scan := &models.Scan{
@@ -71,9 +71,9 @@ func (s *scanServiceImpl) ProcessUpload(ctx context.Context, userID uuid.UUID, r
 		return nil, fmt.Errorf("failed to save scan to db: %w", err)
 	}
 
-	// 3. Emit asynchronous task to Asynq allowing ultra-low latency response latency
+	// 3. Emit asynchronous task to Cloud Tasks allowing ultra-low latency response latency
 	// We generate a presigned GET URL for the worker to bypass private bucket restrictions
-	workerURL, err := s.s3.GeneratePresignedGetURL(ctx, s.bucket, req.ImageKey, 1*time.Hour)
+	workerURL, err := s.gcs.GeneratePresignedGetURL(ctx, s.bucket, req.ImageKey, 1*time.Hour)
 	if err != nil {
 		fmt.Printf("Warning: Failed to presign worker URL, falling back: %v\n", err)
 		workerURL = imageURL
@@ -94,10 +94,10 @@ func (s *scanServiceImpl) GetScanHistory(ctx context.Context, userID uuid.UUID) 
 		return nil, err
 	}
 
-	// Inject presigned URLs so mobile app can view private S3 images
+	// Inject presigned URLs so mobile app can view private GCS images
 	for _, scan := range scans {
-		if key, err := s.s3.ExtractKeyFromURL(scan.ImageURL); err == nil {
-			if presigned, err := s.s3.GeneratePresignedGetURL(ctx, s.bucket, key, 1*time.Hour); err == nil {
+		if key, err := s.gcs.ExtractKeyFromURL(scan.ImageURL); err == nil {
+			if presigned, err := s.gcs.GeneratePresignedGetURL(ctx, s.bucket, key, 1*time.Hour); err == nil {
 				scan.ImageURL = presigned
 			}
 		}
@@ -112,8 +112,8 @@ func (s *scanServiceImpl) GetScanDetails(ctx context.Context, userID uuid.UUID, 
 	}
 
 	// Inject presigned URL
-	if key, err := s.s3.ExtractKeyFromURL(scan.ImageURL); err == nil {
-		if presigned, err := s.s3.GeneratePresignedGetURL(ctx, s.bucket, key, 1*time.Hour); err == nil {
+	if key, err := s.gcs.ExtractKeyFromURL(scan.ImageURL); err == nil {
+		if presigned, err := s.gcs.GeneratePresignedGetURL(ctx, s.bucket, key, 1*time.Hour); err == nil {
 			scan.ImageURL = presigned
 		}
 	}

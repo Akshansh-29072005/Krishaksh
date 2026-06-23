@@ -75,8 +75,8 @@ import (
 	userRoutes "github.com/aarcsx/krisho-backend/internal/modules/users/routes"
 	weatherModule "github.com/aarcsx/krisho-backend/internal/weather"
 	workers "github.com/aarcsx/krisho-backend/internal/workers"
+	"github.com/aarcsx/krisho-backend/pkg/gcs"
 	queue "github.com/aarcsx/krisho-backend/pkg/queue"
-	"github.com/aarcsx/krisho-backend/pkg/s3"
 )
 
 func main() {
@@ -97,11 +97,33 @@ func main() {
 		}
 	}
 
-	rdb := redis.NewClient(&redis.Options{Addr: cfg.RedisAddr})
-	defer rdb.Close()
+	var rdb *redis.Client
+	if os.Getenv("QUEUE_TYPE") != "cloudtasks" {
+		rdb = redis.NewClient(&redis.Options{Addr: cfg.RedisAddr})
+		defer rdb.Close()
+	}
 
-	qClient := queue.NewQueueClient(cfg.RedisAddr)
+	var qClient queue.QueueClient
+	if os.Getenv("QUEUE_TYPE") == "cloudtasks" {
+		ctx := context.Background()
+		qClient, err = queue.NewCloudTasksClient(ctx, cfg)
+		if err != nil {
+			log.Fatalf("failed to create cloud tasks client: %v", err)
+		}
+	} else {
+		qClient = queue.NewQueueClient(cfg.RedisAddr)
+	}
 	defer qClient.Close()
+
+	ctx := context.Background()
+	gcsClient, err := gcs.NewGCSClient(ctx)
+	if err != nil {
+		log.Fatalf("failed to create gcs client: %v", err)
+	}
+	gcsBucket := cfg.GCSBucket
+	if gcsBucket == "" {
+		gcsBucket = "krisho-scans"
+	}
 
 	r := gin.New()
 	r.Use(middleware.RecoveryJSON(), middleware.CORS(), middleware.RequestResponseLogger(), middleware.RequestContext(), middleware.RequestTiming(), middleware.ErrorTracker(), middleware.ValidationGuard(), middleware.UploadSizeLimit(10<<20), middleware.RateLimit(240), middleware.AbusePrevention())
@@ -111,14 +133,8 @@ func main() {
 	authHdlr := authHandler.NewAuthHandler(authSvc)
 	userHdlr := userHandler.NewUserHandler(authRepository)
 
-	s3Client, _ := s3.NewS3Client("ap-south-1", os.Getenv("AWS_ACCESS_KEY"), os.Getenv("AWS_SECRET_KEY"))
-	s3Bucket := os.Getenv("S3_BUCKET")
-	if s3Bucket == "" {
-		s3Bucket = "krisho-scans"
-	}
-
 	scanRepository := scanRepo.NewScanRepository(db)
-	scanSvc := scanService.NewScanService(scanRepository, s3Client, qClient, s3Bucket)
+	scanSvc := scanService.NewScanService(scanRepository, gcsClient, qClient, gcsBucket)
 	scanHdlr := scanHandler.NewScanHandler(scanSvc)
 	diseaseRepository := diseaseRepo.NewDiseaseRepository(db)
 	diseaseHdlr := diseaseHandler.NewDiseaseHandler(diseaseRepository)
@@ -154,7 +170,7 @@ func main() {
 	weatherH := weatherModule.NewHandler(weatherSvc)
 
 	supportRepository := supportRepo.NewSupportRepository(db)
-	supportSvc := supportService.NewSupportService(supportRepository, authRepository, s3Client, s3Bucket)
+	supportSvc := supportService.NewSupportService(supportRepository, authRepository, gcsClient, gcsBucket)
 	supportH := supportHandler.NewSupportHandler(supportSvc)
 
 	promptMgr := internalAI.NewPromptManager("internal/ai/prompts")
@@ -191,12 +207,16 @@ func main() {
 			c.JSON(http.StatusServiceUnavailable, gin.H{"ready": false, "db": false})
 			return
 		}
-		if err := rdb.Ping(ctx).Err(); err != nil {
-			c.JSON(http.StatusServiceUnavailable, gin.H{"ready": false, "redis": false})
-			return
+		if os.Getenv("QUEUE_TYPE") != "cloudtasks" {
+			if err := rdb.Ping(ctx).Err(); err != nil {
+				c.JSON(http.StatusServiceUnavailable, gin.H{"ready": false, "redis": false})
+				return
+			}
+			observability.M.Inc("queue_ready_checks_total")
+			c.JSON(http.StatusOK, gin.H{"ready": true, "db": true, "redis": true})
+		} else {
+			c.JSON(http.StatusOK, gin.H{"ready": true, "db": true, "queue": "cloudtasks"})
 		}
-		observability.M.Inc("queue_ready_checks_total")
-		c.JSON(http.StatusOK, gin.H{"ready": true, "db": true, "redis": true})
 	})
 	r.GET("/metrics", func(c *gin.Context) {
 		c.Header("Content-Type", "text/plain; version=0.0.4")

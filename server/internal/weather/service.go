@@ -59,14 +59,16 @@ func (s *serviceImpl) Get(ctx context.Context, lat, lon string) (Response, strin
 
 	gh := EncodeGeohash(latF, lonF, s.ghPrecision)
 	cacheKey := "weather:gh:" + gh
-	if cached, err := s.redis.Get(ctx, cacheKey).Result(); err == nil && cached != "" {
-		var out Response
-		if json.Unmarshal([]byte(cached), &out) == nil {
-			observability.M.Inc("weather_cache_hits_total")
-			return out, "redis-cache", nil
+	if s.redis != nil {
+		if cached, err := s.redis.Get(ctx, cacheKey).Result(); err == nil && cached != "" {
+			var out Response
+			if json.Unmarshal([]byte(cached), &out) == nil {
+				observability.M.Inc("weather_cache_hits_total")
+				return out, "redis-cache", nil
+			}
 		}
+		observability.M.Inc("weather_cache_misses_total")
 	}
-	observability.M.Inc("weather_cache_misses_total")
 
 	weatherURL := fmt.Sprintf(
 		"https://api.open-meteo.com/v1/forecast?latitude=%s&longitude=%s&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&timezone=auto",
@@ -132,8 +134,10 @@ func (s *serviceImpl) Get(ctx context.Context, lat, lon string) (Response, strin
 		WindSpeed:    fmt.Sprintf("%.0f km/h", weatherData.Current.WindSpeed),
 		LocationName: locationName,
 	}
-	if b, err := json.Marshal(out); err == nil {
-		_ = s.redis.Set(ctx, cacheKey, string(b), s.cacheTTL).Err()
+	if s.redis != nil {
+		if b, err := json.Marshal(out); err == nil {
+			_ = s.redis.Set(ctx, cacheKey, string(b), s.cacheTTL).Err()
+		}
 	}
 	return out, "origin", nil
 }

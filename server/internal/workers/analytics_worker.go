@@ -20,12 +20,7 @@ func NewAnalyticsWorker(r repository.AnalyticsRepository) *AnalyticsWorker {
 	return &AnalyticsWorker{repo: r}
 }
 
-func (w *AnalyticsWorker) HandleAnalyticsEventTask(ctx context.Context, t *asynq.Task) error {
-	var payload queue.AnalyticsEventPayload
-	if err := json.Unmarshal(t.Payload(), &payload); err != nil {
-		observability.M.Inc("worker_errors_total:analytics")
-		return err
-	}
+func (w *AnalyticsWorker) ProcessAnalyticsEventTask(ctx context.Context, payload queue.AnalyticsEventPayload) error {
 	parse := func(s string) *uuid.UUID {
 		if s == "" {
 			return nil
@@ -53,4 +48,13 @@ func (w *AnalyticsWorker) HandleAnalyticsEventTask(ctx context.Context, t *asynq
 	}
 	observability.M.Inc("analytics_events_processed_total")
 	return nil
+}
+
+func (w *AnalyticsWorker) HandleAnalyticsEventTask(ctx context.Context, t *asynq.Task) error {
+	var payload queue.AnalyticsEventPayload
+	if err := json.Unmarshal(t.Payload(), &payload); err != nil {
+		observability.M.Inc("worker_errors_total:analytics")
+		return err
+	}
+	return w.ProcessAnalyticsEventTask(ctx, payload)
 }

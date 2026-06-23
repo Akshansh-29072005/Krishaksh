@@ -22,12 +22,8 @@ func NewScanWorker(repo repository.ScanRepository, aiService *internalAI.Service
 	return &ScanWorker{repo: repo, aiService: aiService}
 }
 
-func (w *ScanWorker) HandleScanAnalyzeTask(ctx context.Context, t *asynq.Task) error {
-	var payload queue.ScanAnalyzePayload
-	if err := json.Unmarshal(t.Payload(), &payload); err != nil {
-		return fmt.Errorf("json unmarshal fallback err: %w", err)
-	}
-
+// ProcessScanTask processes the scan task directly from payload data (no asynq dependency)
+func (w *ScanWorker) ProcessScanTask(ctx context.Context, payload queue.ScanAnalyzePayload) error {
 	scanID, err := uuid.Parse(payload.ScanID)
 	if err != nil {
 		return fmt.Errorf("invalid scan id explicitly: %w", err)
@@ -83,4 +79,12 @@ func (w *ScanWorker) HandleScanAnalyzeTask(ctx context.Context, t *asynq.Task) e
 
 	observability.InitLogger().Info("worker_scan_completed", "scan_id", scanID.String(), "provider", provider, "confidence", confidence, "status", status)
 	return nil
+}
+
+func (w *ScanWorker) HandleScanAnalyzeTask(ctx context.Context, t *asynq.Task) error {
+	var payload queue.ScanAnalyzePayload
+	if err := json.Unmarshal(t.Payload(), &payload); err != nil {
+		return fmt.Errorf("json unmarshal fallback err: %w", err)
+	}
+	return w.ProcessScanTask(ctx, payload)
 }

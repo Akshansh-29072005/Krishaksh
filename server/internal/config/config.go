@@ -20,6 +20,13 @@ type Config struct {
 	DBMinConns        string
 	DBConnMaxLifetime string
 	DBConnMaxIdleTime string
+
+	// GCP Cloud Tasks Config
+	GCPProjectID        string
+	GCPLocation         string
+	CloudTasksQueue     string
+	CloudTasksWorkerURL string // URL for Cloud Run Jobs/Cloud Functions worker endpoint
+	GCSBucket           string // Name of the Google Cloud Storage bucket
 }
 
 func LoadConfig() *Config {
@@ -29,15 +36,20 @@ func LoadConfig() *Config {
 	}
 
 	return &Config{
-		ServerPort:        getEnvOrDefault("SERVER_PORT", "8080"),
-		ServerEnv:         getEnvOrDefault("SERVER_ENV", "development"),
-		DatabaseURL:       getEnvOrDefault("DATABASE_URL", ""),
-		RedisAddr:         getEnvOrDefault("REDIS_ADDR", "127.0.0.1:6379"),
-		Env:               getEnvOrDefault("SERVER_ENV", "development"),
-		DBMaxConns:        getEnvOrDefault("DB_MAX_CONNS", "20"),
-		DBMinConns:        getEnvOrDefault("DB_MIN_CONNS", "2"),
-		DBConnMaxLifetime: getEnvOrDefault("DB_CONN_MAX_LIFETIME", "1h"),
-		DBConnMaxIdleTime: getEnvOrDefault("DB_CONN_MAX_IDLE_TIME", "30m"),
+		ServerPort:          getEnvOrDefault("SERVER_PORT", "8080"),
+		ServerEnv:           getEnvOrDefault("SERVER_ENV", "development"),
+		DatabaseURL:         getEnvOrDefault("DATABASE_URL", ""),
+		RedisAddr:           getEnvOrDefault("REDIS_ADDR", "127.0.0.1:6379"),
+		Env:                 getEnvOrDefault("SERVER_ENV", "development"),
+		DBMaxConns:          getEnvOrDefault("DB_MAX_CONNS", "20"),
+		DBMinConns:          getEnvOrDefault("DB_MIN_CONNS", "2"),
+		DBConnMaxLifetime:   getEnvOrDefault("DB_CONN_MAX_LIFETIME", "1h"),
+		DBConnMaxIdleTime:   getEnvOrDefault("DB_CONN_MAX_IDLE_TIME", "30m"),
+		GCPProjectID:        getEnvOrDefault("GCP_PROJECT_ID", ""),
+		GCPLocation:         getEnvOrDefault("GCP_LOCATION", "us-central1"),
+		CloudTasksQueue:     getEnvOrDefault("CLOUD_TASKS_QUEUE", "krisho-queue"),
+		CloudTasksWorkerURL: getEnvOrDefault("CLOUD_TASKS_WORKER_URL", ""),
+		GCSBucket:           getEnvOrDefault("GCS_BUCKET", ""),
 	}
 }
 
@@ -62,8 +74,9 @@ func (c *Config) Validate() error {
 	if c.ServerPort == "" {
 		return errors.New("server port missing")
 	}
-	if c.RedisAddr == "" {
-		return errors.New("redis addr missing")
+	// Redis is optional now (only required if QUEUE_TYPE != cloudtasks)
+	if os.Getenv("QUEUE_TYPE") != "cloudtasks" && c.RedisAddr == "" {
+		return errors.New("redis addr missing (required when QUEUE_TYPE != cloudtasks)")
 	}
 	return nil
 }

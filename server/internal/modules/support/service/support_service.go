@@ -13,7 +13,7 @@ import (
 	authRepo "github.com/aarcsx/krisho-backend/internal/modules/auth/repository"
 	"github.com/aarcsx/krisho-backend/internal/modules/support/dto"
 	"github.com/aarcsx/krisho-backend/internal/modules/support/repository"
-	"github.com/aarcsx/krisho-backend/pkg/s3"
+	"github.com/aarcsx/krisho-backend/pkg/gcs"
 	"github.com/google/uuid"
 )
 
@@ -29,14 +29,14 @@ type SupportService interface {
 var ErrPhoneNumberRequired = errors.New("phone number required for callback")
 
 type supportServiceImpl struct {
-	repo     repository.SupportRepository
-	authRepo authRepo.AuthRepository
-	s3Client s3.S3Client
-	bucket   string
+	repo      repository.SupportRepository
+	authRepo  authRepo.AuthRepository
+	gcsClient gcs.GCSClient
+	bucket    string
 }
 
-func NewSupportService(repo repository.SupportRepository, authRepo authRepo.AuthRepository, s3Client s3.S3Client, bucket string) SupportService {
-	return &supportServiceImpl{repo: repo, authRepo: authRepo, s3Client: s3Client, bucket: bucket}
+func NewSupportService(repo repository.SupportRepository, authRepo authRepo.AuthRepository, gcsClient gcs.GCSClient, bucket string) SupportService {
+	return &supportServiceImpl{repo: repo, authRepo: authRepo, gcsClient: gcsClient, bucket: bucket}
 }
 
 func (s *supportServiceImpl) CreateTicket(ctx context.Context, userID uuid.UUID, req dto.CreateTicketRequest) (*models.SupportTicket, error) {
@@ -115,11 +115,11 @@ func (s *supportServiceImpl) UploadVoiceAttachment(ctx context.Context, userID u
 		return nil, fmt.Errorf("ticket not found: %w", err)
 	}
 
-	// Generate unique key for S3
+	// Generate unique key for GCS
 	key := fmt.Sprintf("support/voice/%s/%s", ticketID, uuid.New().String()+filepath.Ext(filename))
 
-	// Upload to S3
-	url, err := s.s3Client.UploadImage(ctx, s.bucket, key, file)
+	// Upload to GCS
+	url, err := s.gcsClient.UploadImage(ctx, s.bucket, key, file)
 	if err != nil {
 		return nil, fmt.Errorf("failed to upload voice file: %w", err)
 	}

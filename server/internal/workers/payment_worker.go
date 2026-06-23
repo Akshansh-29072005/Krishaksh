@@ -23,12 +23,7 @@ func NewPaymentWorker(p paymentRepo.PaymentRepository, o orderRepo.OrderReposito
 	return &PaymentWorker{payments: p, orders: o}
 }
 
-func (w *PaymentWorker) HandlePaymentEventTask(ctx context.Context, t *asynq.Task) error {
-	var payload queue.PaymentEventPayload
-	if err := json.Unmarshal(t.Payload(), &payload); err != nil {
-		observability.M.Inc("worker_errors_total:payment")
-		return err
-	}
+func (w *PaymentWorker) ProcessPaymentEventTask(ctx context.Context, payload queue.PaymentEventPayload) error {
 	observability.InitLogger().Info("worker_payment_event_received", "event_id", payload.EventID, "event_type", payload.EventType)
 	var env struct {
 		Payload struct {
@@ -73,7 +68,23 @@ func (w *PaymentWorker) HandlePaymentEventTask(ctx context.Context, t *asynq.Tas
 	return nil
 }
 
-func (w *PaymentWorker) HandleRefundPlaceholderTask(ctx context.Context, t *asynq.Task) error {
-	_ = t
+func (w *PaymentWorker) HandlePaymentEventTask(ctx context.Context, t *asynq.Task) error {
+	var payload queue.PaymentEventPayload
+	if err := json.Unmarshal(t.Payload(), &payload); err != nil {
+		observability.M.Inc("worker_errors_total:payment")
+		return err
+	}
+	return w.ProcessPaymentEventTask(ctx, payload)
+}
+
+func (w *PaymentWorker) ProcessRefundPlaceholderTask(ctx context.Context, payload map[string]string) error {
 	return fmt.Errorf("refund processor not implemented yet")
+}
+
+func (w *PaymentWorker) HandleRefundPlaceholderTask(ctx context.Context, t *asynq.Task) error {
+	var payload map[string]string
+	if err := json.Unmarshal(t.Payload(), &payload); err != nil {
+		return err
+	}
+	return w.ProcessRefundPlaceholderTask(ctx, payload)
 }
