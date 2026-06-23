@@ -35,8 +35,14 @@ func LoadConfig() *Config {
 		log.Println("No .env file found or error reading it. Using system environment variables.")
 	}
 
+	// Cloud Run uses PORT, so prioritize that
+	port := getEnvOrDefault("PORT", "")
+	if port == "" {
+		port = getEnvOrDefault("SERVER_PORT", "8080")
+	}
+
 	return &Config{
-		ServerPort:          getEnvOrDefault("SERVER_PORT", "8080"),
+		ServerPort:          port,
 		ServerEnv:           getEnvOrDefault("SERVER_ENV", "development"),
 		DatabaseURL:         getEnvOrDefault("DATABASE_URL", ""),
 		RedisAddr:           getEnvOrDefault("REDIS_ADDR", "127.0.0.1:6379"),
