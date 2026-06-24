@@ -48,6 +48,10 @@ func (m *Manager) Infer(ctx context.Context, req InferenceRequest) (*InferenceRe
 			if err != nil {
 				lastErr = err
 				observability.InitLogger().Warn("ai_provider_attempt_failed", "provider", p.Name(), "attempt", attempt, "error", err.Error(), "trace_id", req.TraceID, "request_id", req.RequestID)
+				if retryableErr, ok := providers.AsRetryableError(err); ok {
+					observability.InitLogger().Warn("ai_provider_retry_deferred", "provider", p.Name(), "attempt", attempt, "retry_after_ms", retryableErr.RetryAfter.Milliseconds(), "trace_id", req.TraceID, "request_id", req.RequestID)
+					break
+				}
 				continue
 			}
 			parsed, err := ParseAndValidate(raw)

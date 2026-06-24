@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	internalAI "github.com/aarcsx/krisho-backend/internal/ai"
+	aiProviders "github.com/aarcsx/krisho-backend/internal/ai/providers"
 	"github.com/aarcsx/krisho-backend/internal/modules/scans/repository"
 	"github.com/aarcsx/krisho-backend/internal/observability"
 	"github.com/aarcsx/krisho-backend/pkg/queue"
@@ -36,8 +37,8 @@ func (w *ScanWorker) ProcessScanTask(ctx context.Context, payload queue.ScanAnal
 		urlPreview = urlPreview[:60] + "..."
 	}
 
-	observability.InitLogger().Info("worker_scan_started", 
-		"scan_id", scanID.String(), 
+	observability.InitLogger().Info("worker_scan_started",
+		"scan_id", scanID.String(),
 		"crop_type", payload.CropType,
 		"image_url_preview", urlPreview,
 	)
@@ -45,6 +46,17 @@ func (w *ScanWorker) ProcessScanTask(ctx context.Context, payload queue.ScanAnal
 
 	result, err := w.aiService.Analyze(ctx, payload.ImageURL, payload.CropType, traceID, requestID)
 	if err != nil {
+		if retryableErr, ok := aiProviders.AsRetryableError(err); ok {
+			observability.M.Inc("worker_retryable_errors_total:scan")
+			observability.InitLogger().Warn("worker_scan_retryable_failure",
+				"scan_id", scanID.String(),
+				"status_code", retryableErr.StatusCode,
+				"retry_after_ms", retryableErr.RetryAfter.Milliseconds(),
+				"error", retryableErr.Error(),
+			)
+			return err
+		}
+
 		errMsg := err.Error()
 		status := "FAILED"
 		provider := "none"

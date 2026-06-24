@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -84,6 +85,13 @@ func main() {
 		ctx := context.Background()
 		if err := scanWorker.ProcessScanTask(ctx, payload); err != nil {
 			log.Printf("ERROR: Failed to process scan task: %v", err)
+			if retryableErr, ok := aiProviders.AsRetryableError(err); ok {
+				if retryableErr.RetryAfter > 0 {
+					c.Header("Retry-After", strconv.FormatInt(int64(retryableErr.RetryAfter.Seconds()), 10))
+				}
+				c.JSON(http.StatusServiceUnavailable, gin.H{"error": retryableErr.Error(), "retryable": true})
+				return
+			}
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}

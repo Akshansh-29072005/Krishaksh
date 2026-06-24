@@ -35,7 +35,7 @@ func (g *GeminiProvider) Infer(ctx context.Context, prompt, cropType string, ima
 			},
 		}},
 	}
-	b, err := json.Marshal(payload)	
+	b, err := json.Marshal(payload)
 	if err != nil {
 		return "", fmt.Errorf("failed to marshal payload: %w", err)
 	}
@@ -52,6 +52,14 @@ func (g *GeminiProvider) Infer(ctx context.Context, prompt, cropType string, ima
 	defer res.Body.Close()
 	if res.StatusCode >= 300 {
 		body, _ := io.ReadAll(res.Body)
+		if res.StatusCode == http.StatusTooManyRequests {
+			return "", &RetryableError{
+				Provider:   g.Name(),
+				StatusCode: res.StatusCode,
+				RetryAfter: parseGeminiRetryDelay(body),
+				Message:    string(body),
+			}
+		}
 		return "", fmt.Errorf("gemini status %d: %s", res.StatusCode, string(body))
 	}
 	var out struct {
@@ -70,4 +78,27 @@ func (g *GeminiProvider) Infer(ctx context.Context, prompt, cropType string, ima
 		return "", fmt.Errorf("empty gemini response")
 	}
 	return out.Candidates[0].Content.Parts[0].Text, nil
+}
+
+func parseGeminiRetryDelay(body []byte) time.Duration {
+	var payload struct {
+		Error struct {
+			Details []struct {
+				RetryDelay string `json:"retryDelay"`
+			} `json:"details"`
+		} `json:"error"`
+	}
+	if err := json.Unmarshal(body, &payload); err != nil {
+		return 0
+	}
+	for _, detail := range payload.Error.Details {
+		if detail.RetryDelay == "" {
+			continue
+		}
+		retryDelay, err := time.ParseDuration(detail.RetryDelay)
+		if err == nil {
+			return retryDelay
+		}
+	}
+	return 0
 }
