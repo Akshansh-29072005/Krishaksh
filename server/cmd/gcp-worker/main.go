@@ -24,7 +24,12 @@ import (
 
 func main() {
 	observability.InitLogger()
+	log.Printf("GCP Worker initializing...")
+
 	cfg := config.LoadConfig()
+	log.Printf("Config loaded: GCP Project=%s, Queue=%s, Worker URL=%s",
+		os.Getenv("GCP_PROJECT_ID"), os.Getenv("CLOUD_TASKS_QUEUE"), os.Getenv("CLOUD_TASKS_WORKER_URL"))
+
 	if err := cfg.Validate(); err != nil {
 		log.Fatalf("config validation failed: %v", err)
 	}
@@ -34,6 +39,7 @@ func main() {
 		log.Fatalf("db connect failed: %v", err)
 	}
 	defer db.Close()
+	log.Printf("Connected to database successfully")
 
 	scanRepository := scanRepo.NewScanRepository(db)
 	orderRepository := orderRepo.NewOrderRepository(db)
@@ -57,18 +63,31 @@ func main() {
 
 	r := gin.Default()
 
+	r.Use(func(c *gin.Context) {
+		log.Printf("INCOMING REQUEST: Method=%s, Path=%s, ClientIP=%s",
+			c.Request.Method, c.Request.URL.Path, c.ClientIP())
+		c.Next()
+	})
+
 	r.POST("/tasks/scan", func(c *gin.Context) {
+		log.Printf("Received /tasks/scan request!")
+
 		var payload queue.ScanAnalyzePayload
 		if err := c.ShouldBindJSON(&payload); err != nil {
+			log.Printf("ERROR: Invalid payload for /tasks/scan: %v", err)
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
+		log.Printf("Processing scan task: ScanID=%s, CropType=%s, ImageURL=%s",
+			payload.ScanID, payload.CropType, payload.ImageURL)
 
 		ctx := context.Background()
 		if err := scanWorker.ProcessScanTask(ctx, payload); err != nil {
+			log.Printf("ERROR: Failed to process scan task: %v", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
+		log.Printf("SUCCESS: Scan task completed for ScanID=%s", payload.ScanID)
 
 		c.Status(http.StatusOK)
 	})
@@ -122,7 +141,13 @@ func main() {
 	})
 
 	r.GET("/health", func(c *gin.Context) {
-		c.Status(http.StatusOK)
+		log.Printf("Health check received!")
+		c.JSON(http.StatusOK, gin.H{"status": "ok", "service": "gcp-worker"})
+	})
+
+	r.GET("/", func(c *gin.Context) {
+		log.Printf("Root handler hit!")
+		c.JSON(http.StatusOK, gin.H{"status": "ok", "message": "gcp-worker is running!"})
 	})
 
 	port := os.Getenv("PORT")

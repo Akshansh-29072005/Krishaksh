@@ -21,12 +21,18 @@ type CloudTasksClient struct {
 }
 
 func NewCloudTasksClient(ctx context.Context, cfg *config.Config) (QueueClient, error) {
+	log.Printf("Initializing Cloud Tasks client...")
+	log.Printf("Config params: ProjectID=%s, Location=%s, Queue=%s, WorkerURL=%s",
+		cfg.GCPProjectID, cfg.GCPLocation, cfg.CloudTasksQueue, cfg.CloudTasksWorkerURL)
+
 	client, err := cloudtasks.NewClient(ctx)
 	if err != nil {
+		log.Printf("ERROR: Failed to create cloud tasks client: %v", err)
 		return nil, fmt.Errorf("failed to create cloud tasks client: %w", err)
 	}
 
 	queuePath := fmt.Sprintf("projects/%s/locations/%s/queues/%s", cfg.GCPProjectID, cfg.GCPLocation, cfg.CloudTasksQueue)
+	log.Printf("Using Cloud Tasks queue path: %s", queuePath)
 
 	return &CloudTasksClient{
 		client:    client,
@@ -36,16 +42,20 @@ func NewCloudTasksClient(ctx context.Context, cfg *config.Config) (QueueClient, 
 }
 
 func (c *CloudTasksClient) EnqueueScanTask(scanID, imageURL, cropType string) error {
+	log.Printf("Attempting to enqueue scan task: ScanID=%s, CropType=%s", scanID, cropType)
+
 	payload, err := json.Marshal(ScanAnalyzePayload{
 		ScanID:   scanID,
 		ImageURL: imageURL,
 		CropType: cropType,
 	})
 	if err != nil {
+		log.Printf("ERROR: Queue marshal payload failed: %v", err)
 		return fmt.Errorf("queue marshal payload failed: %w", err)
 	}
 
 	workerURL := strings.TrimSuffix(c.config.CloudTasksWorkerURL, "/") + "/tasks/scan"
+	log.Printf("Worker endpoint URL: %s", workerURL)
 
 	req := &cloudtaskspb.CreateTaskRequest{
 		Parent: c.queuePath,
@@ -64,12 +74,14 @@ func (c *CloudTasksClient) EnqueueScanTask(scanID, imageURL, cropType string) er
 		},
 	}
 
+	log.Printf("Calling Cloud Tasks API to create task...")
 	task, err := c.client.CreateTask(context.Background(), req)
 	if err != nil {
+		log.Printf("ERROR: Failed to create cloud task: %v", err)
 		return fmt.Errorf("failed to create cloud task: %w", err)
 	}
 
-	log.Printf("Successfully enqueued Cloud Task: id=%s", task.Name)
+	log.Printf("SUCCESS: Enqueued Cloud Task: id=%s", task.Name)
 	observability.M.Inc("queue_enqueue_total:scan")
 	return nil
 }
