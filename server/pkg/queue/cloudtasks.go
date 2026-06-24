@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"strings"
 
 	cloudtasks "cloud.google.com/go/cloudtasks/apiv2"
 	"cloud.google.com/go/cloudtasks/apiv2/cloudtaskspb"
@@ -44,13 +45,15 @@ func (c *CloudTasksClient) EnqueueScanTask(scanID, imageURL, cropType string) er
 		return fmt.Errorf("queue marshal payload failed: %w", err)
 	}
 
+	workerURL := strings.TrimSuffix(c.config.CloudTasksWorkerURL, "/") + "/tasks/scan"
+
 	req := &cloudtaskspb.CreateTaskRequest{
 		Parent: c.queuePath,
 		Task: &cloudtaskspb.Task{
 			MessageType: &cloudtaskspb.Task_HttpRequest{
 				HttpRequest: &cloudtaskspb.HttpRequest{
 					HttpMethod: cloudtaskspb.HttpMethod_POST,
-					Url:        c.config.CloudTasksWorkerURL + "/tasks/scan",
+					Url:        workerURL,
 					Body:       payload,
 					Headers: map[string]string{
 						"Content-Type": "application/json",
@@ -81,13 +84,15 @@ func (c *CloudTasksClient) EnqueuePaymentEvent(eventID, eventType string, rawPay
 		return fmt.Errorf("queue marshal payment payload failed: %w", err)
 	}
 
+	workerURL := strings.TrimSuffix(c.config.CloudTasksWorkerURL, "/") + "/tasks/payment"
+
 	req := &cloudtaskspb.CreateTaskRequest{
 		Parent: c.queuePath,
 		Task: &cloudtaskspb.Task{
 			MessageType: &cloudtaskspb.Task_HttpRequest{
 				HttpRequest: &cloudtaskspb.HttpRequest{
 					HttpMethod: cloudtaskspb.HttpMethod_POST,
-					Url:        c.config.CloudTasksWorkerURL + "/tasks/payment",
+					Url:        workerURL,
 					Body:       payload,
 					Headers: map[string]string{
 						"Content-Type": "application/json",
@@ -111,13 +116,15 @@ func (c *CloudTasksClient) EnqueueOrderNotification(orderID, userID, status stri
 		return err
 	}
 
+	workerURL := strings.TrimSuffix(c.config.CloudTasksWorkerURL, "/") + "/tasks/notification"
+
 	req := &cloudtaskspb.CreateTaskRequest{
 		Parent: c.queuePath,
 		Task: &cloudtaskspb.Task{
 			MessageType: &cloudtaskspb.Task_HttpRequest{
 				HttpRequest: &cloudtaskspb.HttpRequest{
 					HttpMethod: cloudtaskspb.HttpMethod_POST,
-					Url:        c.config.CloudTasksWorkerURL + "/tasks/notification",
+					Url:        workerURL,
 					Body:       payload,
 					Headers: map[string]string{
 						"Content-Type": "application/json",
@@ -141,13 +148,15 @@ func (c *CloudTasksClient) EnqueueRefund(orderID, paymentID, reason string) erro
 		return err
 	}
 
+	workerURL := strings.TrimSuffix(c.config.CloudTasksWorkerURL, "/") + "/tasks/refund"
+
 	req := &cloudtaskspb.CreateTaskRequest{
 		Parent: c.queuePath,
 		Task: &cloudtaskspb.Task{
 			MessageType: &cloudtaskspb.Task_HttpRequest{
 				HttpRequest: &cloudtaskspb.HttpRequest{
 					HttpMethod: cloudtaskspb.HttpMethod_POST,
-					Url:        c.config.CloudTasksWorkerURL + "/tasks/refund",
+					Url:        workerURL,
 					Body:       payload,
 					Headers: map[string]string{
 						"Content-Type": "application/json",
@@ -171,13 +180,15 @@ func (c *CloudTasksClient) EnqueueAnalyticsEvent(payload AnalyticsEventPayload) 
 		return err
 	}
 
+	workerURL := strings.TrimSuffix(c.config.CloudTasksWorkerURL, "/") + "/tasks/analytics"
+
 	req := &cloudtaskspb.CreateTaskRequest{
 		Parent: c.queuePath,
 		Task: &cloudtaskspb.Task{
 			MessageType: &cloudtaskspb.Task_HttpRequest{
 				HttpRequest: &cloudtaskspb.HttpRequest{
 					HttpMethod: cloudtaskspb.HttpMethod_POST,
-					Url:        c.config.CloudTasksWorkerURL + "/tasks/analytics",
+					Url:        workerURL,
 					Body:       data,
 					Headers: map[string]string{
 						"Content-Type": "application/json",
