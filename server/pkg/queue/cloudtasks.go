@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"time"
 
 	cloudtasks "cloud.google.com/go/cloudtasks/apiv2"
 	"cloud.google.com/go/cloudtasks/apiv2/cloudtaskspb"
@@ -19,6 +20,8 @@ type CloudTasksClient struct {
 	config    *config.Config
 	queuePath string
 }
+
+const cloudTaskDispatchDeadline = 10 * time.Minute
 
 func NewCloudTasksClient(ctx context.Context, cfg *config.Config) (QueueClient, error) {
 	log.Printf("Initializing Cloud Tasks client...")
@@ -70,7 +73,7 @@ func (c *CloudTasksClient) EnqueueScanTask(scanID, imageURL, cropType string) er
 					},
 				},
 			},
-			DispatchDeadline: durationpb.New(600), // 10 minutes
+			DispatchDeadline: durationpb.New(cloudTaskDispatchDeadline),
 		},
 	}
 
@@ -111,7 +114,7 @@ func (c *CloudTasksClient) EnqueuePaymentEvent(eventID, eventType string, rawPay
 					},
 				},
 			},
-			DispatchDeadline: durationpb.New(600),
+			DispatchDeadline: durationpb.New(cloudTaskDispatchDeadline),
 		},
 	}
 
@@ -143,7 +146,7 @@ func (c *CloudTasksClient) EnqueueOrderNotification(orderID, userID, status stri
 					},
 				},
 			},
-			DispatchDeadline: durationpb.New(600),
+			DispatchDeadline: durationpb.New(cloudTaskDispatchDeadline),
 		},
 	}
 
@@ -175,7 +178,7 @@ func (c *CloudTasksClient) EnqueueRefund(orderID, paymentID, reason string) erro
 					},
 				},
 			},
-			DispatchDeadline: durationpb.New(600),
+			DispatchDeadline: durationpb.New(cloudTaskDispatchDeadline),
 		},
 	}
 
@@ -207,7 +210,7 @@ func (c *CloudTasksClient) EnqueueAnalyticsEvent(payload AnalyticsEventPayload) 
 					},
 				},
 			},
-			DispatchDeadline: durationpb.New(600),
+			DispatchDeadline: durationpb.New(cloudTaskDispatchDeadline),
 		},
 	}
 
