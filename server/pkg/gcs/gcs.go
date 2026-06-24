@@ -4,11 +4,13 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"time"
 
+	credentials "cloud.google.com/go/iam/credentials/apiv1"
+	"cloud.google.com/go/iam/credentials/apiv1/credentialspb"
 	"cloud.google.com/go/storage"
 )
 
@@ -20,7 +22,9 @@ type GCSClient interface {
 }
 
 type gcsClientImpl struct {
-	client *storage.Client
+	client              *storage.Client
+	serviceAccountEmail string
+	iamClient           *credentials.IamCredentialsClient
 }
 
 func NewGCSClient(ctx context.Context) (GCSClient, error) {
@@ -28,7 +32,22 @@ func NewGCSClient(ctx context.Context) (GCSClient, error) {
 	if err != nil {
 		return nil, fmt.Errorf("unable to create GCS client: %w", err)
 	}
-	return &gcsClientImpl{client: client}, nil
+
+	serviceAccountEmail := os.Getenv("GCS_SERVICE_ACCOUNT_EMAIL")
+	if serviceAccountEmail == "" {
+		return nil, fmt.Errorf("GCS_SERVICE_ACCOUNT_EMAIL environment variable must be set")
+	}
+
+	iamClient, err := credentials.NewIamCredentialsClient(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("unable to create IAM credentials client: %w", err)
+	}
+
+	return &gcsClientImpl{
+		client:              client,
+		serviceAccountEmail: serviceAccountEmail,
+		iamClient:           iamClient,
+	}, nil
 }
 
 func (g *gcsClientImpl) UploadImage(ctx context.Context, bucket string, key string, body io.Reader) (string, error) {
@@ -44,23 +63,24 @@ func (g *gcsClientImpl) UploadImage(ctx context.Context, bucket string, key stri
 }
 
 func (g *gcsClientImpl) GeneratePresignedURL(ctx context.Context, bucket string, key string, expiration time.Duration) (string, error) {
-	// Get service account email from metadata server (Cloud Run)
-	serviceAccountEmail, err := getServiceAccountEmail(ctx)
-	if err != nil {
-		return "", fmt.Errorf("failed to get service account email: %w", err)
-	}
-
-	signer, err := g.client.Bucket(bucket).Signer(ctx)
-	if err != nil {
-		return "", fmt.Errorf("failed to get bucket signer: %w", err)
-	}
-
 	opts := &storage.SignedURLOptions{
 		Scheme:         storage.SigningSchemeV4,
 		Method:         "PUT",
 		Expires:        time.Now().Add(expiration),
-		GoogleAccessID: serviceAccountEmail,
-		SignBytes:      signer.SignBytes,
+		GoogleAccessID: g.serviceAccountEmail,
+		SignBytes: func(b []byte) ([]byte, error) {
+			req := &credentialspb.SignBlobRequest{
+				Name:    fmt.Sprintf("projects/-/serviceAccounts/%s", g.serviceAccountEmail),
+				Payload: b,
+			}
+
+			resp, err := g.iamClient.SignBlob(ctx, req)
+			if err != nil {
+				return nil, err
+			}
+
+			return resp.SignedBlob, nil
+		},
 	}
 
 	url, err := storage.SignedURL(bucket, key, opts)
@@ -71,22 +91,24 @@ func (g *gcsClientImpl) GeneratePresignedURL(ctx context.Context, bucket string,
 }
 
 func (g *gcsClientImpl) GeneratePresignedGetURL(ctx context.Context, bucket string, key string, expiration time.Duration) (string, error) {
-	serviceAccountEmail, err := getServiceAccountEmail(ctx)
-	if err != nil {
-		return "", fmt.Errorf("failed to get service account email: %w", err)
-	}
-
-	signer, err := g.client.Bucket(bucket).Signer(ctx)
-	if err != nil {
-		return "", fmt.Errorf("failed to get bucket signer: %w", err)
-	}
-
 	opts := &storage.SignedURLOptions{
 		Scheme:         storage.SigningSchemeV4,
 		Method:         "GET",
 		Expires:        time.Now().Add(expiration),
-		GoogleAccessID: serviceAccountEmail,
-		SignBytes:      signer.SignBytes,
+		GoogleAccessID: g.serviceAccountEmail,
+		SignBytes: func(b []byte) ([]byte, error) {
+			req := &credentialspb.SignBlobRequest{
+				Name:    fmt.Sprintf("projects/-/serviceAccounts/%s", g.serviceAccountEmail),
+				Payload: b,
+			}
+
+			resp, err := g.iamClient.SignBlob(ctx, req)
+			if err != nil {
+				return nil, err
+			}
+
+			return resp.SignedBlob, nil
+		},
 	}
 
 	url, err := storage.SignedURL(bucket, key, opts)
@@ -107,32 +129,4 @@ func (g *gcsClientImpl) ExtractKeyFromURL(rawURL string) (string, error) {
 	} else {
 		return strings.TrimPrefix(u.Path, "/"), nil
 	}
-}
-
-// Helper function to get service account email from Cloud Run metadata server
-func getServiceAccountEmail(ctx context.Context) (string, error) {
-	// Use Google Cloud metadata server to get default service account email
-	client := &http.Client{Timeout: 2 * time.Second}
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/email", nil)
-	if err != nil {
-		return "", err
-	}
-	req.Header.Add("Metadata-Flavor", "Google")
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("metadata server returned status: %d", resp.StatusCode)
-	}
-
-	emailBytes, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", err
-	}
-
-	return strings.TrimSpace(string(emailBytes)), nil
 }
