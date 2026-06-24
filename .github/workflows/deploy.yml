@@ -1,40 +1,132 @@
-name: Production Deployment
+name: production-deploy
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
+    paths:
+      - "server/**"
+      - ".github/workflows/deploy.yml"
   workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: true
+
+env:
+  GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+  GCP_REGION: ${{ vars.GCP_REGION || 'asia-south1' }}
+  GCP_ARTIFACT_REGISTRY_LOCATION: ${{ vars.GCP_ARTIFACT_REGISTRY_LOCATION || vars.GCP_REGION || 'asia-south1' }}
+  GCP_ARTIFACT_REGISTRY_REPOSITORY: ${{ vars.GCP_ARTIFACT_REGISTRY_REPOSITORY || 'krisho' }}
+  GCP_API_SERVICE: ${{ vars.GCP_API_SERVICE || 'krisho-api' }}
+  GCP_WORKER_SERVICE: ${{ vars.GCP_WORKER_SERVICE || 'krisho-gcp-worker' }}
+  GCP_API_MAX_INSTANCES: ${{ vars.GCP_API_MAX_INSTANCES || '1000' }}
+  GCP_WORKER_MAX_INSTANCES: ${{ vars.GCP_WORKER_MAX_INSTANCES || '500' }}
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    environment: production
+    defaults:
+      run:
+        working-directory: server
     steps:
-      - name: Checkout Code
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Go
+      - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.25'
+          go-version: "1.25.x"
 
-      - name: Run Tests
-        run: |
-          cd server
-          go test ./...
+      - name: Run tests
+        run: go test ./...
 
-      - name: Deploy to EC2
-        uses: appleboy/ssh-action@v1.0.3
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
         with:
-          host: ${{ secrets.EC2_HOST }}
-          username: akshansh
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            cd ~/AndroidStudioProjects/Krishaksh/server
-            git pull origin main
-            
-            # Use docker-compose.prod.yml with the existing .env file
-            echo "Deploying Krisho Backend..."
-            docker compose -f docker-compose.prod.yml build --pull api worker
-            docker compose -f docker-compose.prod.yml up -d --remove-orphans
-            
-            echo "Deployment finished successfully."
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
+
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+
+      - name: Validate deployment configuration
+        run: |
+          test -n "${GCP_PROJECT_ID}" || (echo "Missing repository variable GCP_PROJECT_ID" && exit 1)
+          test -n "${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}" || (echo "Missing secret GCP_WORKLOAD_IDENTITY_PROVIDER" && exit 1)
+          test -n "${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}" || (echo "Missing secret GCP_SERVICE_ACCOUNT_EMAIL" && exit 1)
+          test -n "${{ secrets.GCP_API_ENV_VARS }}" || (echo "Missing secret GCP_API_ENV_VARS" && exit 1)
+          test -n "${{ secrets.GCP_WORKER_ENV_VARS }}" || (echo "Missing secret GCP_WORKER_ENV_VARS" && exit 1)
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker "${GCP_ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev" --quiet
+
+      - name: Set image tags
+        id: image-tags
+        run: |
+          registry_host="${GCP_ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev"
+          api_image="${registry_host}/${GCP_PROJECT_ID}/${GCP_ARTIFACT_REGISTRY_REPOSITORY}/${GCP_API_SERVICE}:${GITHUB_SHA}"
+          worker_image="${registry_host}/${GCP_PROJECT_ID}/${GCP_ARTIFACT_REGISTRY_REPOSITORY}/${GCP_WORKER_SERVICE}:${GITHUB_SHA}"
+          echo "api_image=${api_image}" >> "${GITHUB_OUTPUT}"
+          echo "worker_image=${worker_image}" >> "${GITHUB_OUTPUT}"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push worker image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./server
+          file: ./server/Dockerfile
+          target: gcp-worker
+          push: true
+          tags: ${{ steps.image-tags.outputs.worker_image }}
+
+      - name: Deploy worker to Cloud Run
+        id: deploy-worker
+        run: |
+          printf '%s\n' "${{ secrets.GCP_WORKER_ENV_VARS }}" > /tmp/krisho-worker.env
+          worker_env_vars="$(grep -v '^[[:space:]]*$' /tmp/krisho-worker.env | paste -sd, -)"
+          gcloud run deploy "${GCP_WORKER_SERVICE}" \
+            --image "${{ steps.image-tags.outputs.worker_image }}" \
+            --region "${GCP_REGION}" \
+            --platform managed \
+            --allow-unauthenticated \
+            --max-instances "${GCP_WORKER_MAX_INSTANCES}" \
+            --set-env-vars "${worker_env_vars}"
+          worker_url="$(gcloud run services describe "${GCP_WORKER_SERVICE}" --region "${GCP_REGION}" --format='value(status.url)')"
+          echo "worker_url=${worker_url}" >> "${GITHUB_OUTPUT}"
+
+      - name: Build and push API image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./server
+          file: ./server/Dockerfile
+          target: api
+          push: true
+          tags: ${{ steps.image-tags.outputs.api_image }}
+
+      - name: Deploy API to Cloud Run
+        run: |
+          printf '%s\n' "${{ secrets.GCP_API_ENV_VARS }}" > /tmp/krisho-api.env
+          {
+            echo "QUEUE_TYPE=cloudtasks"
+            echo "GCP_PROJECT_ID=${GCP_PROJECT_ID}"
+            echo "GCP_LOCATION=${GCP_REGION}"
+            echo "CLOUD_TASKS_WORKER_URL=${{ steps.deploy-worker.outputs.worker_url }}"
+          } >> /tmp/krisho-api.env
+          api_env_vars="$(grep -v '^[[:space:]]*$' /tmp/krisho-api.env | paste -sd, -)"
+          gcloud run deploy "${GCP_API_SERVICE}" \
+            --image "${{ steps.image-tags.outputs.api_image }}" \
+            --region "${GCP_REGION}" \
+            --platform managed \
+            --allow-unauthenticated \
+            --max-instances "${GCP_API_MAX_INSTANCES}" \
+            --set-env-vars "${api_env_vars}"
