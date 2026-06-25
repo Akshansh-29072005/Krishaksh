@@ -16,6 +16,8 @@ type GeminiProvider struct {
 	hc     *http.Client
 }
 
+const geminiModelName = "gemini-2.5-flash-lite"
+
 func NewGeminiProvider(apiKey string) *GeminiProvider {
 	return &GeminiProvider{apiKey: apiKey, hc: &http.Client{Timeout: 20 * time.Second}}
 }
@@ -26,7 +28,7 @@ func (g *GeminiProvider) Infer(ctx context.Context, prompt, cropType string, ima
 	if g.apiKey == "" {
 		return "", fmt.Errorf("gemini key missing")
 	}
-	url := "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent"
+	url := fmt.Sprintf("https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent", geminiModelName)
 	payload := map[string]interface{}{
 		"contents": []map[string]interface{}{{
 			"parts": []map[string]interface{}{
